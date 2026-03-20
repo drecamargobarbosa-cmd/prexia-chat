@@ -26,9 +26,6 @@
       --input-bg: #f2f2f5;
       --input-text: #2d2d2d;
       --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-      --radius-xl: 24px;
-      --radius-lg: 20px;
-      --radius-md: 16px;
     }
 
     body {
@@ -45,6 +42,7 @@
       padding: 10px 24px 14px;
       text-align: center;
       background: rgba(0, 0, 0, 0.04);
+      position: relative;
     }
 
     .brand {
@@ -59,6 +57,27 @@
       color: var(--text);
       font-size: 0.95rem;
       opacity: 0.95;
+    }
+
+    .new-chat-btn {
+      position: absolute;
+      right: 24px;
+      top: 18px;
+      height: 40px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .new-chat-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
     }
 
     main {
@@ -106,8 +125,8 @@
     .bubble {
       max-width: min(78%, 720px);
       padding: 20px 22px;
-      border-radius: var(--radius-lg);
-      line-height: 1.45;
+      border-radius: 20px;
+      line-height: 1.5;
       font-size: 1rem;
       box-shadow: var(--shadow);
       white-space: pre-wrap;
@@ -231,6 +250,15 @@
         font-size: 1.7rem;
       }
 
+      .new-chat-btn {
+        position: static;
+        margin-top: 12px;
+      }
+
+      header {
+        padding-bottom: 18px;
+      }
+
       main {
         padding: 18px 12px 14px;
       }
@@ -257,6 +285,7 @@
   <header>
     <div class="brand">PREXIA</div>
     <div class="subtitle">Assistente Clínico de Apoio à Decisão</div>
+    <button id="newChatButton" class="new-chat-btn">Nova conversa</button>
   </header>
 
   <main>
@@ -281,12 +310,14 @@
   </main>
 
   <script>
-    const API_URL = "https://prexia-api.prexia.com.br/chat";
+    const API_BASE = "https://prexia-api.prexia.com.br";
+    const CHAT_URL = `${API_BASE}/chat`;
     const STORAGE_KEY = "prexia_user_id";
 
     const messagesEl = document.getElementById("messages");
     const inputEl = document.getElementById("messageInput");
     const sendButtonEl = document.getElementById("sendButton");
+    const newChatButtonEl = document.getElementById("newChatButton");
 
     function getOrCreateUserId() {
       const existing = localStorage.getItem(STORAGE_KEY);
@@ -297,7 +328,18 @@
       return generated;
     }
 
-    const userId = getOrCreateUserId();
+    let userId = getOrCreateUserId();
+
+    function createNewUserId() {
+      const generated = "user_" + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem(STORAGE_KEY, generated);
+      userId = generated;
+      return generated;
+    }
+
+    function clearMessages() {
+      messagesEl.innerHTML = "";
+    }
 
     function addMessage(text, role = "assistant", extraClass = "") {
       const row = document.createElement("div");
@@ -342,35 +384,35 @@
     }
 
     function extractAssistantText(data) {
-  if (!data) return "Resposta vazia da API.";
+      if (!data) return "Resposta vazia da API.";
 
-  // resposta principal
-  let resposta = "";
+      let resposta = "";
 
-  if (data.resposta && data.resposta.trim()) {
-    resposta = data.resposta.trim();
-  } else if (
-    data.clinical_response &&
-    data.clinical_response.resposta
-  ) {
-    resposta = data.clinical_response.resposta;
-  }
+      if (typeof data.resposta === "string" && data.resposta.trim()) {
+        resposta = data.resposta.trim();
+      } else if (
+        data.clinical_response &&
+        typeof data.clinical_response.resposta === "string" &&
+        data.clinical_response.resposta.trim()
+      ) {
+        resposta = data.clinical_response.resposta.trim();
+      }
 
-  // se tiver perguntas → adiciona na resposta
-  if (
-    data.clinical_response &&
-    Array.isArray(data.clinical_response.perguntas) &&
-    data.clinical_response.perguntas.length > 0
-  ) {
-    const perguntas = data.clinical_response.perguntas
-      .map(p => "• " + p)
-      .join("\n");
+      if (
+        data.clinical_response &&
+        Array.isArray(data.clinical_response.perguntas) &&
+        data.clinical_response.perguntas.length > 0
+      ) {
+        const perguntas = data.clinical_response.perguntas
+          .map((p) => `• ${p}`)
+          .join("\n");
 
-    return resposta + "\n\n" + perguntas;
-  }
+        return `${resposta}\n\n${perguntas}`;
+      }
 
-  return resposta || "Não foi possível interpretar a resposta da API.";
-}
+      return resposta || "Não foi possível interpretar a resposta da API.";
+    }
+
     async function sendMessage() {
       const message = inputEl.value.trim();
       if (!message) return;
@@ -383,18 +425,18 @@
       addTypingIndicator();
 
       try {
-        const response = await fetch(API_URL, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    user_id: userId,
-    message: message
-  }),
-  mode: "cors",
-  credentials: "omit"
-});
+        const response = await fetch(CHAT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            user_id: userId,
+            message: message
+          }),
+          mode: "cors",
+          credentials: "omit"
+        });
 
         const rawText = await response.text();
 
@@ -436,6 +478,28 @@
       }
     }
 
+    async function startNewConversation() {
+      const currentUserId = userId;
+
+      try {
+        await fetch(`${API_BASE}/reset/${currentUserId}`, {
+          method: "POST",
+          mode: "cors",
+          credentials: "omit"
+        });
+      } catch (error) {
+        console.warn("Não foi possível limpar o contexto antigo no backend.", error);
+      }
+
+      createNewUserId();
+      clearMessages();
+      addMessage(
+        "Olá. Sou o PREXIA. Posso ajudar com protocolos de antibióticos, dose, duração, alertas e avaliação inicial do cenário clínico.",
+        "assistant"
+      );
+      inputEl.focus();
+    }
+
     sendButtonEl.addEventListener("click", sendMessage);
 
     inputEl.addEventListener("keydown", function (event) {
@@ -444,6 +508,8 @@
         sendMessage();
       }
     });
+
+    newChatButtonEl.addEventListener("click", startNewConversation);
 
     addMessage(
       "Olá. Sou o PREXIA. Posso ajudar com protocolos de antibióticos, dose, duração, alertas e avaliação inicial do cenário clínico.",
