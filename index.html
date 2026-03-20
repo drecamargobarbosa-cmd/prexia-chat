@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PREXIA | Assistente Clínico</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #081a4b;
+      --bg-secondary: #0c1f57;
+      --panel: #1b2f68;
+      --panel-soft: #203773;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #ffffff;
+      --text-soft: #d9e2ff;
+      --accent: #ff6f00;
+      --accent-hover: #ff7f1f;
+      --input-bg: #f3f4f6;
+      --input-text: #1f2937;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      width: 100%;
+      padding: 18px 24px 16px;
+      background: #0b1d50;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+
+    header h1 {
+      color: var(--accent);
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    header p {
+      color: #eef2ff;
+      font-size: 14px;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 26px 18px 18px;
+    }
+
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 520px;
+      padding-bottom: 20px;
+    }
+
+    .message {
+      max-width: 78%;
+      padding: 18px 20px;
+      border-radius: 18px;
+      line-height: 1.6;
+      font-size: 16px;
+      box-shadow: var(--shadow);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .message.error {
+      align-self: flex-start;
+      background: #6b1f1f;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff5f5;
+    }
+
+    .composer-wrap {
+      position: sticky;
+      bottom: 0;
+      background: linear-gradient(to top, var(--bg) 80%, rgba(8, 26, 75, 0));
+      padding-top: 14px;
+    }
+
+    .composer {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: transparent;
+    }
+
+    .composer input {
+      flex: 1;
+      height: 58px;
+      border: none;
+      outline: none;
+      border-radius: 14px;
+      padding: 0 18px;
+      font-size: 16px;
+      background: var(--input-bg);
+      color: var(--input-text);
+    }
+
+    .composer button {
+      height: 58px;
+      padding: 0 22px;
+      border: none;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .composer button:hover {
+      background: var(--accent-hover);
+    }
+
+    .composer button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .typing span {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #ffffff;
+      opacity: 0.7;
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+
+    .typing span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes pulse {
+      0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.45;
+      }
+      40% {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 28px;
+      }
+
+      .message {
+        max-width: 92%;
+        font-size: 15px;
+      }
+
+      .composer {
+        gap: 10px;
+      }
+
+      .composer input {
+        height: 54px;
+      }
+
+      .composer button {
+        height: 54px;
+        padding: 0 18px;
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PREXIA</h1>
+    <p>Assistente Clínico de Apoio à Decisão</p>
+  </header>
+
+  <main class="page">
+    <section id="chatArea" class="chat-area">
+      <div class="message bot">
+        Olá. Sou o PREXIA. Posso ajudar com protocolos de antibióticos, dose, duração, alertas e avaliação inicial do cenário clínico.
+      </div>
+    </section>
+
+    <div class="composer-wrap">
+      <div class="composer">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="Digite sua pergunta clínica aqui..."
+          autocomplete="off"
+        />
+        <button id="sendButton">Enviar</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_URL = "https://SEU_DOMINIO_DA_API/chat";
+
+    const chatArea = document.getElementById("chatArea");
+    const messageInput = document.getElementById("messageInput");
+    const sendButton = document.getElementById("sendButton");
+
+    function getUserId() {
+      let userId = localStorage.getItem("prexia_user_id");
+      if (!userId) {
+        userId = "user_" + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem("prexia_user_id", userId);
+      }
+      return userId;
+    }
+
+    function addMessage(text, type = "bot") {
+      const msg = document.createElement("div");
+      msg.className = `message ${type}`;
+      msg.textContent = text;
+      chatArea.appendChild(msg);
+      scrollToBottom();
+      return msg;
+    }
+
+    function addTyping() {
+      const msg = document.createElement("div");
+      msg.className = "message bot";
+      msg.id = "typingMessage";
+      msg.innerHTML = `
+        <div class="typing">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      `;
+      chatArea.appendChild(msg);
+      scrollToBottom();
+      return msg;
+    }
+
+    function removeTyping() {
+      const typing = document.getElementById("typingMessage");
+      if (typing) typing.remove();
+    }
+
+    function scrollToBottom() {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+
+    async function sendMessage() {
+      const mensagemUsuario = messageInput.value.trim();
+
+      if (!mensagemUsuario) return;
+
+      addMessage(mensagemUsuario, "user");
+      messageInput.value = "";
+      messageInput.focus();
+      sendButton.disabled = true;
+
+      addTyping();
+
+      try {
+        const payload = {
+  user_id: getUserId(),
+  mensagem: mensagemUsuario,
+  contexto: {
+    scenario: "clinico",
+    collected_data: ""
+  }
+};
+
+        console.log("Payload enviado:", payload);
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        console.log("Status HTTP:", response.status);
+        console.log("Resposta da API:", data);
+
+        removeTyping();
+
+        if (!response.ok) {
+          const detalheErro =
+            data.detail
+              ? JSON.stringify(data.detail)
+              : `Erro HTTP ${response.status}`;
+
+          addMessage(`Erro ao consultar a API: ${detalheErro}`, "error");
+          return;
+        }
+
+        const textoResposta =
+          data.answer ||
+          data.resposta ||
+          data.response ||
+          data.message ||
+          data.resultado ||
+          (typeof data === "string" ? data : JSON.stringify(data, null, 2));
+
+        addMessage(textoResposta || "Sem resposta disponível.", "bot");
+      } catch (error) {
+        console.error("Erro no chat:", error);
+        removeTyping();
+        addMessage(
+          "Erro ao consultar a API. Verifique a URL do endpoint, o CORS e o formato da resposta.",
+          "error"
+        );
+      } finally {
+        sendButton.disabled = false;
+      }
+    }
+
+    sendButton.addEventListener("click", sendMessage);
+
+    messageInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
