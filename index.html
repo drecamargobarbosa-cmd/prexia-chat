@@ -592,6 +592,7 @@
     const CHAT_URL = `${API_BASE}/chat`;
     const RESET_URL = `${API_BASE}/reset`;
     const STORAGE_KEY = "prexia_user_id";
+    const HISTORY_KEY = "prexia_chat_history";
 
     const messagesEl = document.getElementById("messages");
     const inputEl = document.getElementById("messageInput");
@@ -611,12 +612,14 @@
     function createNewUserId() {
       const generated = "user_" + Math.random().toString(36).slice(2, 10);
       localStorage.setItem(STORAGE_KEY, generated);
+      localStorage.removeItem(HISTORY_KEY);
       userId = generated;
       return generated;
     }
 
     function clearMessages() {
       messagesEl.innerHTML = "";
+      localStorage.removeItem(HISTORY_KEY);
     }
 
     function getAssistantTitle(type) {
@@ -644,16 +647,6 @@
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
-    }
-
-    function normalizeFreeText(str) {
-      return (str || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
     }
 
     function isClinicalStructuredText(text) {
@@ -689,7 +682,6 @@
 
       for (const rawLine of lines) {
         const line = rawLine.trim();
-
         if (!line) {
           if (currentSection) {
             currentSection.content.push("");
@@ -700,21 +692,12 @@
         }
 
         const headerMatch = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/);
-
         if (headerMatch) {
           const key = normalizeKey(headerMatch[1]);
           const mappedTitle = titlesMap[key];
-
           if (mappedTitle) {
-            currentSection = {
-              title: mappedTitle,
-              content: []
-            };
-
-            if (headerMatch[2]) {
-              currentSection.content.push(headerMatch[2].trim());
-            }
-
+            currentSection = { title: mappedTitle, content: [] };
+            if (headerMatch[2]) currentSection.content.push(headerMatch[2].trim());
             sections.push(currentSection);
             continue;
           }
@@ -729,10 +712,7 @@
 
       return {
         intro: introLines.join("\n").trim(),
-        sections: sections.map((section) => ({
-          title: section.title,
-          content: section.content.join("\n").trim()
-        }))
+        sections: sections.map((s) => ({ title: s.title, content: s.content.join("\n").trim() }))
       };
     }
 
@@ -756,160 +736,103 @@
     }
 
     function shouldHighlightSection(title) {
-      return title === "Diagnóstico provável" ||
-             title === "Medicação" ||
-             title === "Dose" ||
-             title === "Duração";
+      return ["Diagnóstico provável", "Medicação", "Dose", "Duração"].includes(title);
     }
 
     function parseCondutaSubfields(content) {
       const regex = /(medica(?:ç|c)ao|dose|dura(?:ç|c)ao)\s*:\s*/gi;
       const normalizedMatches = [...content.matchAll(regex)];
-
-      if (normalizedMatches.length === 0) {
-        return {
-          intro: content.trim(),
-          fields: []
-        };
-      }
+      if (normalizedMatches.length === 0) return { intro: content.trim(), fields: [] };
 
       const fields = [];
       let intro = "";
-
-      if (normalizedMatches[0].index > 0) {
-        intro = content.slice(0, normalizedMatches[0].index).trim();
-      }
+      if (normalizedMatches[0].index > 0) intro = content.slice(0, normalizedMatches[0].index).trim();
 
       for (let i = 0; i < normalizedMatches.length; i++) {
         const match = normalizedMatches[i];
         const rawLabel = match[1];
         const start = match.index + match[0].length;
-        const end =
-          i + 1 < normalizedMatches.length
-            ? normalizedMatches[i + 1].index
-            : content.length;
-
+        const end = i + 1 < normalizedMatches.length ? normalizedMatches[i + 1].index : content.length;
         const value = content.slice(start, end).trim();
         const labelKey = normalizeKey(rawLabel);
-
         let label = rawLabel;
         if (labelKey === "medicacao") label = "Medicação";
         if (labelKey === "dose") label = "Dose";
         if (labelKey === "duracao") label = "Duração";
-
-        if (value) {
-          fields.push({
-            label,
-            value
-          });
-        }
+        if (value) fields.push({ label, value });
       }
-
-      return {
-        intro,
-        fields
-      };
+      return { intro, fields };
     }
 
     function createSubcardsElement(fields) {
       const wrapper = document.createElement("div");
       wrapper.className = "clinical-subcards";
-
       fields.forEach((field) => {
         const card = document.createElement("div");
         card.className = "clinical-subcard";
-
         const label = document.createElement("div");
         label.className = "clinical-subcard-label";
         label.textContent = `${getSubcardIcon(field.label)} ${field.label}`;
-
         const value = document.createElement("div");
         value.className = "clinical-subcard-value";
         value.textContent = field.value;
-
         card.appendChild(label);
         card.appendChild(value);
         wrapper.appendChild(card);
       });
-
       return wrapper;
     }
 
     function createClinicalSectionElement(title, content) {
       const sectionEl = document.createElement("div");
       sectionEl.className = "clinical-section";
-
       const titleEl = document.createElement("div");
       titleEl.className = "clinical-section-title";
-
       const iconEl = document.createElement("span");
       iconEl.className = "clinical-section-title-icon";
       iconEl.textContent = getSectionIcon(title);
-
       const textEl = document.createElement("span");
       textEl.textContent = title;
-
       titleEl.appendChild(iconEl);
       titleEl.appendChild(textEl);
-
       const bodyEl = document.createElement("div");
       bodyEl.className = "clinical-section-body";
 
       if (title === "Conduta recomendada") {
-        const parsedConduta = parseCondutaSubfields(content);
-
-        if (parsedConduta.intro) {
-          const introEl = document.createElement("div");
-          introEl.className = "plain-text";
-          introEl.textContent = parsedConduta.intro;
-          bodyEl.appendChild(introEl);
+        const parsed = parseCondutaSubfields(content);
+        if (parsed.intro) {
+          const iEl = document.createElement("div");
+          iEl.className = "plain-text";
+          iEl.textContent = parsed.intro;
+          bodyEl.appendChild(iEl);
         }
-
-        if (parsedConduta.fields.length > 0) {
-          bodyEl.appendChild(createSubcardsElement(parsedConduta.fields));
-        }
-
-        if (!parsedConduta.intro && parsedConduta.fields.length === 0) {
-          bodyEl.textContent = content;
-        }
-
+        if (parsed.fields.length > 0) bodyEl.appendChild(createSubcardsElement(parsed.fields));
         sectionEl.appendChild(titleEl);
         sectionEl.appendChild(bodyEl);
         return sectionEl;
       }
 
-      const lines = content
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line);
-
-      const isList =
-        lines.length > 1 &&
-        lines.every((line) => line.startsWith("•") || line.startsWith("-"));
-
+      const lines = content.split("\n").map(l => l.trim()).filter(l => l);
+      const isList = lines.length > 1 && lines.every(l => l.startsWith("•") || l.startsWith("-"));
       if (isList) {
         const list = document.createElement("ul");
         list.className = "clinical-list";
-
-        lines.forEach((line) => {
+        lines.forEach(l => {
           const item = document.createElement("li");
-          item.textContent = line.replace(/^[•-]\s*/, "");
+          item.textContent = l.replace(/^[•-]\s*/, "");
           list.appendChild(item);
         });
-
         bodyEl.appendChild(list);
       } else if (shouldHighlightSection(title)) {
-        const highlight = document.createElement("div");
-        highlight.className = "clinical-highlight";
-        highlight.textContent = content;
-        bodyEl.appendChild(highlight);
+        const h = document.createElement("div");
+        h.className = "clinical-highlight";
+        h.textContent = content;
+        bodyEl.appendChild(h);
       } else {
         bodyEl.textContent = content;
       }
-
       sectionEl.appendChild(titleEl);
       sectionEl.appendChild(bodyEl);
-
       return sectionEl;
     }
 
@@ -921,125 +844,73 @@
         container.appendChild(plain);
         return;
       }
-
       const parsed = parseClinicalSections(text);
-
       if (parsed.intro) {
-        const introEl = document.createElement("div");
-        introEl.className = "plain-text";
-        introEl.textContent = parsed.intro;
-        container.appendChild(introEl);
+        const iEl = document.createElement("div");
+        iEl.className = "plain-text";
+        iEl.textContent = parsed.intro;
+        container.appendChild(iEl);
       }
-
       if (parsed.sections.length > 0) {
-        const sectionsWrapper = document.createElement("div");
-        sectionsWrapper.className = "clinical-sections";
-
-        parsed.sections.forEach((section) => {
-          sectionsWrapper.appendChild(
-            createClinicalSectionElement(section.title, section.content)
-          );
-        });
-
-        container.appendChild(sectionsWrapper);
+        const sw = document.createElement("div");
+        sw.className = "clinical-sections";
+        parsed.sections.forEach(s => sw.appendChild(createClinicalSectionElement(s.title, s.content)));
+        container.appendChild(sw);
       }
     }
 
-    function containsQuestionInText(baseText, question) {
-      const normalizedBase = normalizeFreeText(baseText);
-      const normalizedQuestion = normalizeFreeText(question);
-
-      if (!normalizedBase || !normalizedQuestion) return false;
-      return normalizedBase.includes(normalizedQuestion);
+    function saveMessage(text, role, extraClass, label) {
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      history.push({ text, role, extraClass, label });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
     }
 
-    function mergeResponseAndQuestions(responseText, questions) {
-      const base = (responseText || "").trim();
-
-      if (!Array.isArray(questions) || questions.length === 0) {
-        return base;
-      }
-
-      const uniqueQuestions = [];
-      const seen = new Set();
-
-      questions.forEach((question) => {
-        const cleanQuestion = typeof question === "string" ? question.trim() : "";
-        const normalizedQuestion = normalizeFreeText(cleanQuestion);
-
-        if (!cleanQuestion || !normalizedQuestion || seen.has(normalizedQuestion)) {
-          return;
-        }
-
-        seen.add(normalizedQuestion);
-
-        if (!containsQuestionInText(base, cleanQuestion)) {
-          uniqueQuestions.push(cleanQuestion);
-        }
-      });
-
-      if (uniqueQuestions.length === 0) {
-        return base;
-      }
-
-      const questionsBlock = uniqueQuestions.map((question) => `• ${question}`).join("\n");
-
-      return base ? `${base}\n\n${questionsBlock}` : questionsBlock;
-    }
-
-    function addMessage(text, role = "assistant", extraClass = "", label = "") {
+    function addMessage(text, role = "assistant", extraClass = "", label = "", skipSave = false) {
       const row = document.createElement("div");
       row.className = `message-row ${role}`;
-
       const bubble = document.createElement("div");
       bubble.className = `bubble ${extraClass}`.trim();
-
       if (label) {
-        const title = document.createElement("div");
-        title.className = "bubble-title";
-        title.textContent = label;
-        bubble.appendChild(title);
+        const t = document.createElement("div");
+        t.className = "bubble-title";
+        t.textContent = label;
+        bubble.appendChild(t);
       }
-
       const content = document.createElement("div");
       content.className = "bubble-content";
-
-      if (role === "assistant") {
-        appendFormattedContent(content, text);
-      } else {
-        content.textContent = text;
-      }
-
+      if (role === "assistant") appendFormattedContent(content, text);
+      else content.textContent = text;
       bubble.appendChild(content);
-
       row.appendChild(bubble);
       messagesEl.appendChild(row);
       messagesEl.scrollTop = messagesEl.scrollHeight;
 
+      if (!skipSave) saveMessage(text, role, extraClass, label);
       return row;
+    }
+
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      if (history.length === 0) {
+        addMessage("Olá, sou o PREXIA. Como posso ajudar na sua decisão clínica hoje?", "assistant", "assistant-type-default", "PREXIA");
+      } else {
+        history.forEach(m => addMessage(m.text, m.role, m.extraClass, m.label, true));
+      }
     }
 
     function addTypingIndicator() {
       const row = document.createElement("div");
       row.className = "message-row assistant";
       row.id = "typingRow";
-
       const bubble = document.createElement("div");
       bubble.className = "bubble assistant-type-default";
-
       const title = document.createElement("div");
       title.className = "bubble-title";
       title.textContent = "PREXIA analisando";
       bubble.appendChild(title);
-
       const typing = document.createElement("div");
       typing.className = "typing";
-      typing.innerHTML = `
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-      `;
-
+      typing.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
       bubble.appendChild(typing);
       row.appendChild(bubble);
       messagesEl.appendChild(row);
@@ -1047,153 +918,70 @@
     }
 
     function removeTypingIndicator() {
-      const typingRow = document.getElementById("typingRow");
-      if (typingRow) typingRow.remove();
-    }
-
-    function extractAssistantPayload(data) {
-      if (!data) {
-        return {
-          text: "Resposta vazia da API.",
-          type: "erro"
-        };
-      }
-
-      const clinical = data.clinical_response || {};
-      const type = clinical.tipo || "default";
-
-      let resposta = "";
-
-      if (typeof data.resposta === "string" && data.resposta.trim()) {
-        resposta = data.resposta.trim();
-      } else if (
-        typeof clinical.resposta === "string" &&
-        clinical.resposta.trim()
-      ) {
-        resposta = clinical.resposta.trim();
-      }
-
-      resposta = mergeResponseAndQuestions(resposta, clinical.perguntas);
-
-      return {
-        text: resposta || "Não foi possível interpretar a resposta da API.",
-        type
-      };
+      const row = document.getElementById("typingRow");
+      if (row) row.remove();
     }
 
     async function sendMessage() {
-      const message = inputEl.value.trim();
-      if (!message) return;
-
-      addMessage(message, "user");
+      const text = inputEl.value.trim();
+      if (!text) return;
       inputEl.value = "";
-      inputEl.focus();
-
-      sendButtonEl.disabled = true;
+      inputEl.style.height = "auto";
+      addMessage(text, "user");
       addTypingIndicator();
+      sendButtonEl.disabled = true;
 
       try {
         const response = await fetch(CHAT_URL, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            user_id: userId,
-            message: message
-          }),
-          mode: "cors",
-          credentials: "omit"
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, message: text })
         });
-
-        const rawText = await response.text();
-
-        if (!response.ok) {
-          let detail = `Erro HTTP ${response.status}.`;
-          try {
-            const errorData = JSON.parse(rawText);
-            if (errorData.detail) {
-              detail += ` ${errorData.detail}`;
-            } else if (errorData.erro) {
-              detail += ` ${errorData.erro}`;
-            }
-          } catch (_) {
-            if (rawText) {
-              detail += ` ${rawText}`;
-            }
-          }
-          throw new Error(detail);
-        }
-
-        let data;
-        try {
-          data = JSON.parse(rawText);
-        } catch (error) {
-          throw new Error("A API respondeu em formato inválido.");
-        }
-
-        const assistantPayload = extractAssistantPayload(data);
+        const data = await response.json();
         removeTypingIndicator();
-        addMessage(
-          assistantPayload.text,
-          "assistant",
-          getAssistantBubbleClass(assistantPayload.type),
-          getAssistantTitle(assistantPayload.type)
-        );
-      } catch (error) {
+        if (data.response) {
+          const type = data.type || "default";
+          addMessage(data.response, "assistant", getAssistantBubbleClass(type), getAssistantTitle(type));
+        } else {
+          addMessage("Erro: Resposta vazia da API.", "assistant", "system-error", "Erro de Conexão");
+        }
+      } catch (err) {
         removeTypingIndicator();
-        addMessage(
-          `Erro ao consultar a API.\n\n${error.message}`,
-          "assistant",
-          "system-error",
-          "Erro de integração"
-        );
-        console.error("Erro no frontend:", error);
+        addMessage("Erro ao conectar com o servidor.", "assistant", "system-error", "Erro de Rede");
       } finally {
         sendButtonEl.disabled = false;
       }
     }
 
-    async function startNewConversation() {
-      const currentUserId = userId;
-
-      try {
-        await fetch(`${RESET_URL}/${currentUserId}`, {
-          method: "POST",
-          mode: "cors",
-          credentials: "omit"
-        });
-      } catch (error) {
-        console.warn("Não foi possível limpar o contexto antigo no backend.", error);
-      }
-
-      createNewUserId();
-      clearMessages();
-      addWelcomeMessage();
-      inputEl.focus();
-    }
-
-    function addWelcomeMessage() {
-      addMessage(
-        "Olá. Sou o PREXIA.\n\nPosso apoiar a tomada de decisão clínica com foco atual em protocolos de antibióticos, incluindo indicação, escolha do medicamento, dose, duração, avaliação inicial de risco e reavaliação clínica. O projeto está sendo estruturado para evoluir futuramente para outras classes medicamentosas.",
-        "assistant",
-        "assistant-type-default",
-        "Boas-vindas"
-      );
-    }
-
     sendButtonEl.addEventListener("click", sendMessage);
-
-    inputEl.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
         sendMessage();
       }
     });
 
-    newChatButtonEl.addEventListener("click", startNewConversation);
+    newChatButtonEl.addEventListener("click", async () => {
+      if (confirm("Deseja iniciar uma nova sessão clínica? O histórico atual será limpo.")) {
+        try {
+          await fetch(RESET_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId })
+          });
+        } catch (e) {}
+        createNewUserId();
+        clearMessages();
+        addMessage("Olá, sou o PREXIA. Como posso ajudar na sua decisão clínica hoje?", "assistant", "assistant-type-default", "PREXIA");
+      }
+    });
 
-    addWelcomeMessage();
+    inputEl.addEventListener("input", function () {
+      this.style.height = "auto";
+      this.style.height = Math.min(this.scrollHeight, 180) + "px";
+    });
+
+    window.onload = loadHistory;
   </script>
 </body>
 </html>
