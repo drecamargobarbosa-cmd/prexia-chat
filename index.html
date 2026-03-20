@@ -342,35 +342,35 @@
     }
 
     function extractAssistantText(data) {
-      if (!data) return "Resposta vazia da API.";
+  if (!data) return "Resposta vazia da API.";
 
-      if (typeof data.resposta === "string" && data.resposta.trim()) {
-        return data.resposta.trim();
-      }
+  // resposta principal
+  let resposta = "";
 
-      if (
-        data.clinical_response &&
-        typeof data.clinical_response.resposta === "string" &&
-        data.clinical_response.resposta.trim()
-      ) {
-        return data.clinical_response.resposta.trim();
-      }
+  if (data.resposta && data.resposta.trim()) {
+    resposta = data.resposta.trim();
+  } else if (
+    data.clinical_response &&
+    data.clinical_response.resposta
+  ) {
+    resposta = data.clinical_response.resposta;
+  }
 
-      if (
-        data.clinical_response &&
-        Array.isArray(data.clinical_response.perguntas) &&
-        data.clinical_response.perguntas.length
-      ) {
-        return [
-          data.clinical_response.resposta || "Ainda preciso de algumas informações:",
-          "",
-          ...data.clinical_response.perguntas.map(p => `• ${p}`)
-        ].join("\n");
-      }
+  // se tiver perguntas → adiciona na resposta
+  if (
+    data.clinical_response &&
+    Array.isArray(data.clinical_response.perguntas) &&
+    data.clinical_response.perguntas.length > 0
+  ) {
+    const perguntas = data.clinical_response.perguntas
+      .map(p => "• " + p)
+      .join("\n");
 
-      return "Não foi possível interpretar a resposta da API.";
-    }
+    return resposta + "\n\n" + perguntas;
+  }
 
+  return resposta || "Não foi possível interpretar a resposta da API.";
+}
     async function sendMessage() {
       const message = inputEl.value.trim();
       if (!message) return;
