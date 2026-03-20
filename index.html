@@ -352,7 +352,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
       gap: 10px;
-      margin-top: 2px;
+      margin-top: 10px;
     }
 
     .clinical-subcard {
@@ -377,6 +377,7 @@
     .clinical-subcard-value {
       line-height: 1.45;
       word-break: break-word;
+      white-space: pre-wrap;
     }
 
     .assistant-type-protocolo_definido .clinical-section-title,
@@ -637,19 +638,28 @@
       return line.replace(/\s+/g, " ").trim();
     }
 
-    function isClinicalStructuredText(text) {
-      const sectionHeaders = [
-        "Avaliação Clínica:",
-        "Diagnóstico provável:",
-        "Conduta recomendada:",
-        "Medicação:",
-        "Dose:",
-        "Duração:",
-        "Justificativa:",
-        "Observações clínicas:"
-      ];
+    function normalizeKey(line) {
+      return normalizeLine(line)
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
 
-      return sectionHeaders.some((header) => text.includes(header));
+    function isClinicalStructuredText(text) {
+      const normalizedText = normalizeKey(text);
+
+      return [
+        "avaliacao clinica:",
+        "diagnostico provavel:",
+        "conduta recomendada:",
+        "medicacao:",
+        "dose:",
+        "duracao:",
+        "justificativa:",
+        "observacoes clinicas:"
+      ].some((header) => normalizedText.includes(header));
     }
 
     function parseClinicalSections(text) {
@@ -659,14 +669,14 @@
       let currentSection = null;
 
       const titlesMap = {
-        "avaliação clínica": "Avaliação Clínica",
-        "diagnóstico provável": "Diagnóstico provável",
+        "avaliacao clinica": "Avaliação Clínica",
+        "diagnostico provavel": "Diagnóstico provável",
         "conduta recomendada": "Conduta recomendada",
-        "medicação": "Medicação",
+        "medicacao": "Medicação",
         "dose": "Dose",
-        "duração": "Duração",
+        "duracao": "Duração",
         "justificativa": "Justificativa",
-        "observações clínicas": "Observações clínicas"
+        "observacoes clinicas": "Observações clínicas"
       };
 
       for (const rawLine of lines) {
@@ -681,10 +691,10 @@
           continue;
         }
 
-        const headerMatch = line.match(/^([^:]+):\s*(.*)$/);
+        const headerMatch = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/);
 
         if (headerMatch) {
-          const key = normalizeLine(headerMatch[1]).toLowerCase();
+          const key = normalizeKey(headerMatch[1]);
           const mappedTitle = titlesMap[key];
 
           if (mappedTitle) {
@@ -745,63 +755,51 @@
     }
 
     function parseCondutaSubfields(content) {
-      const lines = content.split("\n");
+      const regex = /(medica(?:ç|c)ao|dose|dura(?:ç|c)ao)\s*:\s*/gi;
+      const normalizedMatches = [...content.matchAll(regex)];
+
+      if (normalizedMatches.length === 0) {
+        return {
+          intro: content.trim(),
+          fields: []
+        };
+      }
+
       const fields = [];
-      let intro = [];
-      let currentField = null;
+      let intro = "";
 
-      const fieldMap = {
-        "medicação": "Medicação",
-        "dose": "Dose",
-        "duração": "Duração"
-      };
+      if (normalizedMatches[0].index > 0) {
+        intro = content.slice(0, normalizedMatches[0].index).trim();
+      }
 
-      for (const rawLine of lines) {
-        const line = rawLine.trim();
+      for (let i = 0; i < normalizedMatches.length; i++) {
+        const match = normalizedMatches[i];
+        const rawLabel = match[1];
+        const start = match.index + match[0].length;
+        const end =
+          i + 1 < normalizedMatches.length
+            ? normalizedMatches[i + 1].index
+            : content.length;
 
-        if (!line) {
-          if (currentField) {
-            currentField.content.push("");
-          } else if (intro.length > 0) {
-            intro.push("");
-          }
-          continue;
-        }
+        const value = content.slice(start, end).trim();
+        const labelKey = normalizeKey(rawLabel);
 
-        const match = line.match(/^([^:]+):\s*(.*)$/);
+        let label = rawLabel;
+        if (labelKey === "medicacao") label = "Medicação";
+        if (labelKey === "dose") label = "Dose";
+        if (labelKey === "duracao") label = "Duração";
 
-        if (match) {
-          const key = normalizeLine(match[1]).toLowerCase();
-          const mapped = fieldMap[key];
-
-          if (mapped) {
-            currentField = {
-              label: mapped,
-              content: []
-            };
-
-            if (match[2]) {
-              currentField.content.push(match[2].trim());
-            }
-
-            fields.push(currentField);
-            continue;
-          }
-        }
-
-        if (currentField) {
-          currentField.content.push(line);
-        } else {
-          intro.push(line);
+        if (value) {
+          fields.push({
+            label,
+            value
+          });
         }
       }
 
       return {
-        intro: intro.join("\n").trim(),
-        fields: fields.map((field) => ({
-          label: field.label,
-          value: field.content.join("\n").trim()
-        }))
+        intro,
+        fields
       };
     }
 
