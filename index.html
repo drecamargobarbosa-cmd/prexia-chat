@@ -350,6 +350,38 @@
       word-break: break-word;
     }
 
+    .clinical-subcards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .clinical-subcard {
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .clinical-subcard-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.25px;
+      margin-bottom: 6px;
+      opacity: 0.96;
+    }
+
+    .clinical-subcard-value {
+      line-height: 1.45;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
     .assistant-type-protocolo_definido .clinical-section-title,
     .assistant-type-protocolo_definido .clinical-subcard-label {
       color: #e5fff0;
@@ -510,6 +542,10 @@
       .clinical-section {
         padding: 13px 14px;
       }
+
+      .clinical-subcards {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -599,95 +635,83 @@
       return "assistant-type-default";
     }
 
-    // Normaliza string removendo acentos e espaços extras para comparação
+    function normalizeLine(line) {
+      return line.replace(/\s+/g, " ").trim();
+    }
+
     function normalizeKey(str) {
-      return str
-        .trim()
+      return normalizeLine(str)
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, " ");
+        .replace(/[\u0300-\u036f]/g, "");
     }
 
-    // Mapa de headers conhecidos: chave normalizada -> título de exibição
-    const SECTION_TITLES_MAP = {
-      "avaliacao clinica": "Avaliação Clínica",
-      "diagnostico provavel": "Diagnóstico provável",
-      "conduta recomendada": "Conduta recomendada",
-      "medicacao": "Medicação",
-      "dose": "Dose",
-      "duracao": "Duração",
-      "justificativa": "Justificativa",
-      "observacoes clinicas": "Observações clínicas"
-    };
-
-    // Retorna o título mapeado se a string for um header conhecido, ou null
-    function matchSectionHeader(str) {
-      const key = normalizeKey(str);
-      return SECTION_TITLES_MAP[key] || null;
-    }
-
-    // Verifica se o texto contém pelo menos um header clínico conhecido
     function isClinicalStructuredText(text) {
-      const normalized = normalizeKey(text);
-      return Object.keys(SECTION_TITLES_MAP).some(
-        (key) => normalized.includes(key + ":")
-      );
+      const normalizedText = normalizeKey(text);
+      return [
+        "avaliacao clinica:",
+        "diagnostico provavel:",
+        "conduta recomendada:",
+        "medicacao:",
+        "dose:",
+        "duracao:",
+        "justificativa:",
+        "observacoes clinicas:"
+      ].some((header) => normalizedText.includes(header));
     }
 
-    /*
-      parseClinicalSections: percorre o texto linha por linha.
-      Cada linha é testada como possível header no formato "Título: conteúdo".
-      Quando um header conhecido é encontrado, uma nova seção é aberta.
-      Linhas que não são headers vão como conteúdo da seção atual (ou intro).
-      Seções sem conteúdo nenhum (ex: "Avaliação Clínica:" como título-âncora)
-      são incluídas com content vazio para exibição apenas do título.
-    */
     function parseClinicalSections(text) {
       const lines = text.split("\n");
       const sections = [];
-      const introLines = [];
+      let introLines = [];
       let currentSection = null;
+
+      const titlesMap = {
+        "avaliacao clinica": "Avaliação Clínica",
+        "diagnostico provavel": "Diagnóstico provável",
+        "conduta recomendada": "Conduta recomendada",
+        "medicacao": "Medicação",
+        "dose": "Dose",
+        "duracao": "Duração",
+        "justificativa": "Justificativa",
+        "observacoes clinicas": "Observações clínicas"
+      };
 
       for (const rawLine of lines) {
         const line = rawLine.trim();
 
-        // Linha vazia: preserva espaçamento dentro da seção atual ou intro
         if (!line) {
           if (currentSection) {
-            currentSection.contentLines.push("");
-          } else {
+            currentSection.content.push("");
+          } else if (introLines.length > 0) {
             introLines.push("");
           }
           continue;
         }
 
-        // Tenta identificar um header no formato "Parte antes do dois-pontos: resto"
-        const colonIdx = line.indexOf(":");
-        if (colonIdx > 0) {
-          const candidate = line.slice(0, colonIdx);
-          const mappedTitle = matchSectionHeader(candidate);
+        const headerMatch = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/);
+
+        if (headerMatch) {
+          const key = normalizeKey(headerMatch[1]);
+          const mappedTitle = titlesMap[key];
 
           if (mappedTitle) {
-            // Abre nova seção
             currentSection = {
               title: mappedTitle,
-              contentLines: []
+              content: []
             };
-            sections.push(currentSection);
 
-            // Se houver conteúdo após o ":" na mesma linha, adiciona
-            const rest = line.slice(colonIdx + 1).trim();
-            if (rest) {
-              currentSection.contentLines.push(rest);
+            if (headerMatch[2]) {
+              currentSection.content.push(headerMatch[2].trim());
             }
+
+            sections.push(currentSection);
             continue;
           }
         }
 
-        // Linha comum: vai para a seção atual ou intro
         if (currentSection) {
-          currentSection.contentLines.push(line);
+          currentSection.content.push(line);
         } else {
           introLines.push(line);
         }
@@ -695,42 +719,116 @@
 
       return {
         intro: introLines.join("\n").trim(),
-        sections: sections.map((s) => ({
-          title: s.title,
-          content: s.contentLines.join("\n").trim()
+        sections: sections.map((section) => ({
+          title: section.title,
+          content: section.content.join("\n").trim()
         }))
       };
     }
 
     function getSectionIcon(title) {
-      const icons = {
-        "Avaliação Clínica": "🩺",
-        "Diagnóstico provável": "📌",
-        "Conduta recomendada": "💊",
-        "Medicação": "💉",
-        "Dose": "⏱️",
-        "Duração": "📅",
-        "Justificativa": "📘",
-        "Observações clínicas": "📍"
-      };
-      return icons[title] || "•";
+      if (title === "Avaliação Clínica") return "🩺";
+      if (title === "Diagnóstico provável") return "📌";
+      if (title === "Conduta recomendada") return "💊";
+      if (title === "Medicação") return "💉";
+      if (title === "Dose") return "⏱️";
+      if (title === "Duração") return "📅";
+      if (title === "Justificativa") return "📘";
+      if (title === "Observações clínicas") return "📍";
+      return "•";
     }
 
-    // Seções que devem exibir conteúdo destacado em pill
+    function getSubcardIcon(label) {
+      if (label === "Medicação") return "💉";
+      if (label === "Dose") return "⏱️";
+      if (label === "Duração") return "📅";
+      return "•";
+    }
+
     function shouldHighlightSection(title) {
-      return (
-        title === "Diagnóstico provável" ||
-        title === "Medicação" ||
-        title === "Dose" ||
-        title === "Duração"
-      );
+      return title === "Diagnóstico provável" ||
+             title === "Medicação" ||
+             title === "Dose" ||
+             title === "Duração";
+    }
+
+    function parseCondutaSubfields(content) {
+      const regex = /(medica(?:ç|c)ao|dose|dura(?:ç|c)ao)\s*:\s*/gi;
+      const normalizedMatches = [...content.matchAll(regex)];
+
+      if (normalizedMatches.length === 0) {
+        return {
+          intro: content.trim(),
+          fields: []
+        };
+      }
+
+      const fields = [];
+      let intro = "";
+
+      if (normalizedMatches[0].index > 0) {
+        intro = content.slice(0, normalizedMatches[0].index).trim();
+      }
+
+      for (let i = 0; i < normalizedMatches.length; i++) {
+        const match = normalizedMatches[i];
+        const rawLabel = match[1];
+        const start = match.index + match[0].length;
+        const end =
+          i + 1 < normalizedMatches.length
+            ? normalizedMatches[i + 1].index
+            : content.length;
+
+        const value = content.slice(start, end).trim();
+        const labelKey = normalizeKey(rawLabel);
+
+        let label = rawLabel;
+        if (labelKey === "medicacao") label = "Medicação";
+        if (labelKey === "dose") label = "Dose";
+        if (labelKey === "duracao") label = "Duração";
+
+        if (value) {
+          fields.push({
+            label,
+            value
+          });
+        }
+      }
+
+      return {
+        intro,
+        fields
+      };
+    }
+
+    function createSubcardsElement(fields) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "clinical-subcards";
+
+      fields.forEach((field) => {
+        const card = document.createElement("div");
+        card.className = "clinical-subcard";
+
+        const label = document.createElement("div");
+        label.className = "clinical-subcard-label";
+        label.textContent = `${getSubcardIcon(field.label)} ${field.label}`;
+
+        const value = document.createElement("div");
+        value.className = "clinical-subcard-value";
+        value.textContent = field.value;
+
+        card.appendChild(label);
+        card.appendChild(value);
+        wrapper.appendChild(card);
+      });
+
+      return wrapper;
     }
 
     function createClinicalSectionElement(title, content) {
       const sectionEl = document.createElement("div");
       sectionEl.className = "clinical-section";
 
-      // Título da seção
       const titleEl = document.createElement("div");
       titleEl.className = "clinical-section-title";
 
@@ -743,34 +841,52 @@
 
       titleEl.appendChild(iconEl);
       titleEl.appendChild(textEl);
-      sectionEl.appendChild(titleEl);
-
-      // Se não há conteúdo, exibe apenas o título (seção âncora)
-      if (!content) {
-        return sectionEl;
-      }
 
       const bodyEl = document.createElement("div");
       bodyEl.className = "clinical-section-body";
 
+      if (title === "Conduta recomendada") {
+        const parsedConduta = parseCondutaSubfields(content);
+
+        if (parsedConduta.intro) {
+          const introEl = document.createElement("div");
+          introEl.className = "plain-text";
+          introEl.textContent = parsedConduta.intro;
+          bodyEl.appendChild(introEl);
+        }
+
+        if (parsedConduta.fields.length > 0) {
+          bodyEl.appendChild(createSubcardsElement(parsedConduta.fields));
+        }
+
+        if (!parsedConduta.intro && parsedConduta.fields.length === 0) {
+          bodyEl.textContent = content;
+        }
+
+        sectionEl.appendChild(titleEl);
+        sectionEl.appendChild(bodyEl);
+        return sectionEl;
+      }
+
       const lines = content
         .split("\n")
-        .map((l) => l.trim())
-        .filter((l) => l);
+        .map((line) => line.trim())
+        .filter((line) => line);
 
-      // Verifica se é uma lista de bullets
       const isList =
         lines.length > 1 &&
-        lines.every((l) => l.startsWith("•") || l.startsWith("-"));
+        lines.every((line) => line.startsWith("•") || line.startsWith("-"));
 
       if (isList) {
         const list = document.createElement("ul");
         list.className = "clinical-list";
-        lines.forEach((l) => {
+
+        lines.forEach((line) => {
           const item = document.createElement("li");
-          item.textContent = l.replace(/^[•-]\s*/, "");
+          item.textContent = line.replace(/^[•-]\s*/, "");
           list.appendChild(item);
         });
+
         bodyEl.appendChild(list);
       } else if (shouldHighlightSection(title)) {
         const highlight = document.createElement("div");
@@ -781,7 +897,9 @@
         bodyEl.textContent = content;
       }
 
+      sectionEl.appendChild(titleEl);
       sectionEl.appendChild(bodyEl);
+
       return sectionEl;
     }
 
@@ -841,6 +959,7 @@
       }
 
       bubble.appendChild(content);
+
       row.appendChild(bubble);
       messagesEl.appendChild(row);
       messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -882,7 +1001,10 @@
 
     function extractAssistantPayload(data) {
       if (!data) {
-        return { text: "Resposta vazia da API.", type: "erro" };
+        return {
+          text: "Resposta vazia da API.",
+          type: "erro"
+        };
       }
 
       const clinical = data.clinical_response || {};
@@ -892,13 +1014,21 @@
 
       if (typeof data.resposta === "string" && data.resposta.trim()) {
         resposta = data.resposta.trim();
-      } else if (typeof clinical.resposta === "string" && clinical.resposta.trim()) {
+      } else if (
+        typeof clinical.resposta === "string" &&
+        clinical.resposta.trim()
+      ) {
         resposta = clinical.resposta.trim();
       }
 
       if (Array.isArray(clinical.perguntas) && clinical.perguntas.length > 0) {
-        const perguntas = clinical.perguntas.map((p) => `• ${p}`).join("\n");
-        resposta = resposta ? `${resposta}\n\n${perguntas}` : perguntas;
+        const perguntas = clinical.perguntas
+          .map((p) => `• ${p}`)
+          .join("\n");
+
+        resposta = resposta
+          ? `${resposta}\n\n${perguntas}`
+          : perguntas;
       }
 
       return {
@@ -921,8 +1051,13 @@
       try {
         const response = await fetch(CHAT_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: userId, message: message }),
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            user_id: userId,
+            message: message
+          }),
           mode: "cors",
           credentials: "omit"
         });
@@ -933,10 +1068,15 @@
           let detail = `Erro HTTP ${response.status}.`;
           try {
             const errorData = JSON.parse(rawText);
-            if (errorData.detail) detail += ` ${errorData.detail}`;
-            else if (errorData.erro) detail += ` ${errorData.erro}`;
+            if (errorData.detail) {
+              detail += ` ${errorData.detail}`;
+            } else if (errorData.erro) {
+              detail += ` ${errorData.erro}`;
+            }
           } catch (_) {
-            if (rawText) detail += ` ${rawText}`;
+            if (rawText) {
+              detail += ` ${rawText}`;
+            }
           }
           throw new Error(detail);
         }
@@ -944,7 +1084,7 @@
         let data;
         try {
           data = JSON.parse(rawText);
-        } catch {
+        } catch (error) {
           throw new Error("A API respondeu em formato inválido.");
         }
 
@@ -972,6 +1112,7 @@
 
     async function startNewConversation() {
       const currentUserId = userId;
+
       try {
         await fetch(`${RESET_URL}/${currentUserId}`, {
           method: "POST",
@@ -981,6 +1122,7 @@
       } catch (error) {
         console.warn("Não foi possível limpar o contexto antigo no backend.", error);
       }
+
       createNewUserId();
       clearMessages();
       addWelcomeMessage();
