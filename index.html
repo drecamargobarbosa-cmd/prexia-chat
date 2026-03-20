@@ -15,15 +15,20 @@
       --bg: #081a4b;
       --bg-secondary: #0c1f57;
       --panel: #1b2f68;
-      --panel-soft: #203773;
+      --panel-soft: #23397a;
       --border: rgba(255, 255, 255, 0.08);
       --text: #ffffff;
-      --text-soft: #d9e2ff;
-      --accent: #ff6f00;
-      --accent-hover: #ff7f1f;
-      --input-bg: #f3f4f6;
-      --input-text: #1f2937;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      --text-soft: #dce6ff;
+      --accent: #ff7a00;
+      --accent-hover: #ff8d22;
+      --danger: #9b1c1c;
+      --danger-soft: #b3261e;
+      --input-bg: #f2f2f5;
+      --input-text: #2d2d2d;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+      --radius-xl: 24px;
+      --radius-lg: 20px;
+      --radius-md: 16px;
     }
 
     body {
@@ -36,122 +41,148 @@
     }
 
     header {
-      width: 100%;
-      padding: 18px 24px 16px;
-      background: #0b1d50;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px 24px 14px;
       text-align: center;
+      background: rgba(0, 0, 0, 0.04);
     }
 
-    header h1 {
+    .brand {
       color: var(--accent);
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 2px;
     }
 
-    header p {
-      color: #eef2ff;
-      font-size: 14px;
+    .subtitle {
+      color: var(--text);
+      font-size: 0.95rem;
+      opacity: 0.95;
     }
 
-    .page {
+    main {
       width: 100%;
       max-width: 980px;
       margin: 0 auto;
-      flex: 1;
+      padding: 26px 18px 18px;
       display: flex;
       flex-direction: column;
-      padding: 26px 18px 18px;
+      flex: 1;
+      min-height: calc(100vh - 86px);
     }
 
-    .chat-area {
+    .chat-wrap {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      min-height: 520px;
-      padding-bottom: 20px;
+      min-height: 0;
     }
 
-    .message {
-      max-width: 78%;
-      padding: 18px 20px;
-      border-radius: 18px;
-      line-height: 1.6;
-      font-size: 16px;
+    .messages {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      padding: 2px 4px 8px;
+      scroll-behavior: smooth;
+    }
+
+    .message-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .message-row.assistant {
+      justify-content: flex-start;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: min(78%, 720px);
+      padding: 20px 22px;
+      border-radius: var(--radius-lg);
+      line-height: 1.45;
+      font-size: 1rem;
       box-shadow: var(--shadow);
       white-space: pre-wrap;
-      word-wrap: break-word;
+      word-break: break-word;
     }
 
-    .message.bot {
-      align-self: flex-start;
-      background: var(--panel);
-      border: 1px solid var(--border);
+    .assistant .bubble {
+      background: linear-gradient(180deg, var(--panel-soft), var(--panel));
       color: var(--text);
+      border: 1px solid var(--border);
+      border-top-left-radius: 18px;
     }
 
-    .message.user {
-      align-self: flex-end;
+    .user .bubble {
       background: var(--accent);
-      color: #ffffff;
+      color: #fff;
+      border: none;
+      border-top-right-radius: 18px;
+      min-width: 120px;
+      text-align: left;
     }
 
-    .message.error {
-      align-self: flex-start;
-      background: #7a1f1f;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #fff5f5;
-    }
-
-    .composer-wrap {
-      position: sticky;
-      bottom: 0;
-      background: linear-gradient(to top, var(--bg) 80%, rgba(8, 26, 75, 0));
-      padding-top: 14px;
+    .system-error {
+      background: linear-gradient(180deg, var(--danger-soft), var(--danger));
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .composer {
-      display: flex;
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 110px;
       gap: 12px;
       align-items: center;
-      background: transparent;
     }
 
-    .composer input {
-      flex: 1;
-      height: 58px;
+    .input {
+      width: 100%;
+      height: 60px;
       border: none;
       outline: none;
-      border-radius: 14px;
-      padding: 0 18px;
-      font-size: 16px;
+      border-radius: 18px;
       background: var(--input-bg);
       color: var(--input-text);
+      padding: 0 18px;
+      font-size: 1rem;
+      box-shadow: var(--shadow);
     }
 
-    .composer button {
-      height: 58px;
-      padding: 0 22px;
+    .input::placeholder {
+      color: #7a7a86;
+    }
+
+    .send-btn {
+      height: 60px;
       border: none;
-      border-radius: 14px;
+      border-radius: 18px;
       background: var(--accent);
       color: #fff;
-      font-size: 18px;
+      font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+      box-shadow: var(--shadow);
     }
 
-    .composer button:hover {
+    .send-btn:hover {
       background: var(--accent-hover);
+      transform: translateY(-1px);
     }
 
-    .composer button:disabled {
-      opacity: 0.7;
+    .send-btn:disabled {
       cursor: not-allowed;
+      opacity: 0.65;
+      transform: none;
     }
 
     .typing {
@@ -160,217 +191,262 @@
       gap: 6px;
     }
 
-    .typing span {
+    .dot {
       width: 8px;
       height: 8px;
-      border-radius: 999px;
-      background: #ffffff;
-      opacity: 0.7;
-      animation: pulse 1.2s infinite ease-in-out;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.85);
+      animation: blink 1.2s infinite ease-in-out;
     }
 
-    .typing span:nth-child(2) {
-      animation-delay: 0.2s;
+    .dot:nth-child(2) {
+      animation-delay: 0.15s;
     }
 
-    .typing span:nth-child(3) {
-      animation-delay: 0.4s;
+    .dot:nth-child(3) {
+      animation-delay: 0.3s;
     }
 
-    @keyframes pulse {
+    @keyframes blink {
       0%, 80%, 100% {
-        transform: scale(0.8);
-        opacity: 0.45;
+        opacity: 0.25;
+        transform: scale(0.9);
       }
       40% {
-        transform: scale(1.2);
         opacity: 1;
+        transform: scale(1);
       }
     }
 
-    @media (max-width: 768px) {
-      header h1 {
-        font-size: 28px;
+    .footer-note {
+      color: var(--text-soft);
+      opacity: 0.75;
+      font-size: 0.82rem;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 700px) {
+      .brand {
+        font-size: 1.7rem;
       }
 
-      .message {
-        max-width: 92%;
-        font-size: 15px;
+      main {
+        padding: 18px 12px 14px;
+      }
+
+      .bubble {
+        max-width: 88%;
+        font-size: 0.96rem;
+        padding: 16px 18px;
       }
 
       .composer {
+        grid-template-columns: 1fr 96px;
         gap: 10px;
       }
 
-      .composer input {
-        height: 54px;
-      }
-
-      .composer button {
-        height: 54px;
-        padding: 0 18px;
-        font-size: 16px;
+      .input,
+      .send-btn {
+        height: 56px;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>PREXIA</h1>
-    <p>Assistente Clínico de Apoio à Decisão</p>
+    <div class="brand">PREXIA</div>
+    <div class="subtitle">Assistente Clínico de Apoio à Decisão</div>
   </header>
 
-  <main class="page">
-    <section id="chatArea" class="chat-area">
-      <div class="message bot">
-        Olá. Sou o PREXIA. Posso ajudar com protocolos de antibióticos, dose, duração, alertas e avaliação inicial do cenário clínico.
-      </div>
-    </section>
+  <main>
+    <div class="chat-wrap">
+      <div class="messages" id="messages"></div>
 
-    <div class="composer-wrap">
       <div class="composer">
         <input
-          type="text"
           id="messageInput"
+          class="input"
+          type="text"
           placeholder="Digite sua pergunta clínica aqui..."
           autocomplete="off"
         />
-        <button id="sendButton">Enviar</button>
+        <button id="sendButton" class="send-btn">Enviar</button>
+      </div>
+
+      <div class="footer-note">
+        Ferramenta de apoio, utilize julgamento clínico e protocolos institucionais.
       </div>
     </div>
   </main>
 
   <script>
     const API_URL = "https://prexia-api.prexia.com.br/chat";
+    const STORAGE_KEY = "prexia_user_id";
 
-    const chatArea = document.getElementById("chatArea");
-    const messageInput = document.getElementById("messageInput");
-    const sendButton = document.getElementById("sendButton");
+    const messagesEl = document.getElementById("messages");
+    const inputEl = document.getElementById("messageInput");
+    const sendButtonEl = document.getElementById("sendButton");
 
-    function getUserId() {
-      let userId = localStorage.getItem("prexia_user_id");
-      if (!userId) {
-        userId = "user_" + Math.random().toString(36).slice(2, 10);
-        localStorage.setItem("prexia_user_id", userId);
-      }
-      return userId;
+    function getOrCreateUserId() {
+      const existing = localStorage.getItem(STORAGE_KEY);
+      if (existing) return existing;
+
+      const generated = "user_" + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem(STORAGE_KEY, generated);
+      return generated;
     }
 
-    function addMessage(text, type = "bot") {
-      const msg = document.createElement("div");
-      msg.className = `message ${type}`;
-      msg.textContent = text;
-      chatArea.appendChild(msg);
-      scrollToBottom();
-      return msg;
+    const userId = getOrCreateUserId();
+
+    function addMessage(text, role = "assistant", extraClass = "") {
+      const row = document.createElement("div");
+      row.className = `message-row ${role}`;
+
+      const bubble = document.createElement("div");
+      bubble.className = `bubble ${extraClass}`.trim();
+      bubble.textContent = text;
+
+      row.appendChild(bubble);
+      messagesEl.appendChild(row);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      return row;
     }
 
-    function addTyping() {
-      const msg = document.createElement("div");
-      msg.className = "message bot";
-      msg.id = "typingMessage";
-      msg.innerHTML = `
-        <div class="typing">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
+    function addTypingIndicator() {
+      const row = document.createElement("div");
+      row.className = "message-row assistant";
+      row.id = "typingRow";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+
+      const typing = document.createElement("div");
+      typing.className = "typing";
+      typing.innerHTML = `
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
       `;
-      chatArea.appendChild(msg);
-      scrollToBottom();
-      return msg;
+
+      bubble.appendChild(typing);
+      row.appendChild(bubble);
+      messagesEl.appendChild(row);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    function removeTyping() {
-      const typing = document.getElementById("typingMessage");
-      if (typing) {
-        typing.remove();
+    function removeTypingIndicator() {
+      const typingRow = document.getElementById("typingRow");
+      if (typingRow) typingRow.remove();
+    }
+
+    function extractAssistantText(data) {
+      if (!data) return "Resposta vazia da API.";
+
+      if (typeof data.resposta === "string" && data.resposta.trim()) {
+        return data.resposta.trim();
       }
-    }
 
-    function scrollToBottom() {
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth"
-      });
+      if (
+        data.clinical_response &&
+        typeof data.clinical_response.resposta === "string" &&
+        data.clinical_response.resposta.trim()
+      ) {
+        return data.clinical_response.resposta.trim();
+      }
+
+      if (
+        data.clinical_response &&
+        Array.isArray(data.clinical_response.perguntas) &&
+        data.clinical_response.perguntas.length
+      ) {
+        return [
+          data.clinical_response.resposta || "Ainda preciso de algumas informações:",
+          "",
+          ...data.clinical_response.perguntas.map(p => `• ${p}`)
+        ].join("\n");
+      }
+
+      return "Não foi possível interpretar a resposta da API.";
     }
 
     async function sendMessage() {
-      const mensagemUsuario = messageInput.value.trim();
+      const message = inputEl.value.trim();
+      if (!message) return;
 
-      if (!mensagemUsuario) return;
+      addMessage(message, "user");
+      inputEl.value = "";
+      inputEl.focus();
 
-      addMessage(mensagemUsuario, "user");
-      messageInput.value = "";
-      messageInput.focus();
-      sendButton.disabled = true;
-      addTyping();
+      sendButtonEl.disabled = true;
+      addTypingIndicator();
 
       try {
-        const payload = {
-          user_id: getUserId(),
-          mensagem: mensagemUsuario,
-          contexto: {
-            scenario: "clinico",
-            collected_data: ""
-          }
-        };
-
-        console.log("Payload enviado:", payload);
-
         const response = await fetch(API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            user_id: userId,
+            message: message
+          })
         });
 
-        const data = await response.json().catch(() => ({}));
-
-        console.log("Status HTTP:", response.status);
-        console.log("Resposta da API:", data);
-
-        removeTyping();
+        const rawText = await response.text();
 
         if (!response.ok) {
-          const detalheErro = data.detail
-            ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail))
-            : `Erro HTTP ${response.status}`;
-
-          addMessage(`Erro ao consultar a API: ${detalheErro}`, "error");
-          return;
+          let detail = `Erro HTTP ${response.status}.`;
+          try {
+            const errorData = JSON.parse(rawText);
+            if (errorData.detail) {
+              detail += ` ${errorData.detail}`;
+            }
+          } catch (_) {
+            if (rawText) {
+              detail += ` ${rawText}`;
+            }
+          }
+          throw new Error(detail);
         }
 
-        const textoResposta =
-          data.answer ||
-          data.resposta ||
-          data.response ||
-          data.message ||
-          data.resultado ||
-          data.text ||
-          (typeof data === "string" ? data : JSON.stringify(data, null, 2));
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (error) {
+          throw new Error("A API respondeu em formato inválido.");
+        }
 
-        addMessage(textoResposta || "Sem resposta disponível.", "bot");
+        const assistantText = extractAssistantText(data);
+        removeTypingIndicator();
+        addMessage(assistantText, "assistant");
       } catch (error) {
-        console.error("Erro no chat:", error);
-        removeTyping();
+        removeTypingIndicator();
         addMessage(
-          "Erro ao consultar a API. Verifique a URL do endpoint, o CORS e o formato da resposta.",
-          "error"
+          `Erro ao consultar a API.\n\n${error.message}`,
+          "assistant",
+          "system-error"
         );
+        console.error("Erro no frontend:", error);
       } finally {
-        sendButton.disabled = false;
+        sendButtonEl.disabled = false;
       }
     }
 
-    sendButton.addEventListener("click", sendMessage);
+    sendButtonEl.addEventListener("click", sendMessage);
 
-    messageInput.addEventListener("keydown", function (event) {
+    inputEl.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
+        event.preventDefault();
         sendMessage();
       }
     });
+
+    addMessage(
+      "Olá. Sou o PREXIA. Posso ajudar com protocolos de antibióticos, dose, duração, alertas e avaliação inicial do cenário clínico.",
+      "assistant"
+    );
   </script>
 </body>
 </html>
