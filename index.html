@@ -261,6 +261,92 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    .bubble-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .plain-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .clinical-sections {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .clinical-section {
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+      backdrop-filter: blur(2px);
+    }
+
+    .clinical-section-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      opacity: 0.95;
+    }
+
+    .clinical-section-body {
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+
+    .clinical-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .clinical-list li {
+      position: relative;
+      padding-left: 16px;
+      line-height: 1.45;
+    }
+
+    .clinical-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0.95;
+      font-weight: 700;
+    }
+
+    .assistant-type-protocolo_definido .clinical-section-title {
+      color: #e5fff0;
+    }
+
+    .assistant-type-investigacao .clinical-section-title {
+      color: #eef6ff;
+    }
+
+    .assistant-type-coleta_dados .clinical-section-title {
+      color: #fff4d2;
+    }
+
+    .assistant-type-reavaliacao .clinical-section-title,
+    .system-error .clinical-section-title {
+      color: #ffe7e5;
+    }
+
+    .assistant-type-default .clinical-section-title {
+      color: #ffe4c8;
+    }
+
     .composer {
       display: grid;
       grid-template-columns: 1fr 120px;
@@ -480,6 +566,164 @@
       return "assistant-type-default";
     }
 
+    function normalizeLine(line) {
+      return line.replace(/\s+/g, " ").trim();
+    }
+
+    function isClinicalStructuredText(text) {
+      const sectionHeaders = [
+        "Avaliação Clínica:",
+        "Diagnóstico provável:",
+        "Conduta recomendada:",
+        "Medicação:",
+        "Dose:",
+        "Duração:",
+        "Justificativa:",
+        "Observações clínicas:"
+      ];
+
+      return sectionHeaders.some((header) => text.includes(header));
+    }
+
+    function parseClinicalSections(text) {
+      const lines = text.split("\n");
+      const sections = [];
+      let introLines = [];
+      let currentSection = null;
+
+      const titlesMap = {
+        "avaliação clínica": "Avaliação Clínica",
+        "diagnóstico provável": "Diagnóstico provável",
+        "conduta recomendada": "Conduta recomendada",
+        "medicação": "Medicação",
+        "dose": "Dose",
+        "duração": "Duração",
+        "justificativa": "Justificativa",
+        "observações clínicas": "Observações clínicas"
+      };
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+
+        if (!line) {
+          if (currentSection) {
+            currentSection.content.push("");
+          } else if (introLines.length > 0) {
+            introLines.push("");
+          }
+          continue;
+        }
+
+        const headerMatch = line.match(/^([^:]+):\s*(.*)$/);
+
+        if (headerMatch) {
+          const key = normalizeLine(headerMatch[1]).toLowerCase();
+          const mappedTitle = titlesMap[key];
+
+          if (mappedTitle) {
+            currentSection = {
+              title: mappedTitle,
+              content: []
+            };
+
+            if (headerMatch[2]) {
+              currentSection.content.push(headerMatch[2].trim());
+            }
+
+            sections.push(currentSection);
+            continue;
+          }
+        }
+
+        if (currentSection) {
+          currentSection.content.push(line);
+        } else {
+          introLines.push(line);
+        }
+      }
+
+      return {
+        intro: introLines.join("\n").trim(),
+        sections: sections.map((section) => ({
+          title: section.title,
+          content: section.content.join("\n").trim()
+        }))
+      };
+    }
+
+    function createClinicalSectionElement(title, content) {
+      const sectionEl = document.createElement("div");
+      sectionEl.className = "clinical-section";
+
+      const titleEl = document.createElement("div");
+      titleEl.className = "clinical-section-title";
+      titleEl.textContent = title;
+
+      const bodyEl = document.createElement("div");
+      bodyEl.className = "clinical-section-body";
+
+      const lines = content
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line);
+
+      const isList =
+        lines.length > 1 &&
+        lines.every((line) => line.startsWith("•") || line.startsWith("-"));
+
+      if (isList) {
+        const list = document.createElement("ul");
+        list.className = "clinical-list";
+
+        lines.forEach((line) => {
+          const item = document.createElement("li");
+          item.textContent = line.replace(/^[•-]\s*/, "");
+          list.appendChild(item);
+        });
+
+        bodyEl.appendChild(list);
+      } else {
+        bodyEl.textContent = content;
+      }
+
+      sectionEl.appendChild(titleEl);
+      sectionEl.appendChild(bodyEl);
+
+      return sectionEl;
+    }
+
+    function appendFormattedContent(container, text) {
+      if (!isClinicalStructuredText(text)) {
+        const plain = document.createElement("div");
+        plain.className = "plain-text";
+        plain.textContent = text;
+        container.appendChild(plain);
+        return;
+      }
+
+      const parsed = parseClinicalSections(text);
+
+      if (parsed.intro) {
+        const introEl = document.createElement("div");
+        introEl.className = "plain-text";
+        introEl.textContent = parsed.intro;
+        container.appendChild(introEl);
+      }
+
+      if (parsed.sections.length > 0) {
+        const sectionsWrapper = document.createElement("div");
+        sectionsWrapper.className = "clinical-sections";
+
+        parsed.sections.forEach((section) => {
+          sectionsWrapper.appendChild(
+            createClinicalSectionElement(section.title, section.content)
+          );
+        });
+
+        container.appendChild(sectionsWrapper);
+      }
+    }
+
     function addMessage(text, role = "assistant", extraClass = "", label = "") {
       const row = document.createElement("div");
       row.className = `message-row ${role}`;
@@ -495,7 +739,14 @@
       }
 
       const content = document.createElement("div");
-      content.textContent = text;
+      content.className = "bubble-content";
+
+      if (role === "assistant") {
+        appendFormattedContent(content, text);
+      } else {
+        content.textContent = text;
+      }
+
       bubble.appendChild(content);
 
       row.appendChild(bubble);
