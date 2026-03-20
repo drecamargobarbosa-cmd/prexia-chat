@@ -348,24 +348,61 @@
       margin-top: 2px;
     }
 
-    .assistant-type-protocolo_definido .clinical-section-title {
+    .clinical-subcards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .clinical-subcard {
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .clinical-subcard-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.25px;
+      margin-bottom: 6px;
+      opacity: 0.96;
+    }
+
+    .clinical-subcard-value {
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .assistant-type-protocolo_definido .clinical-section-title,
+    .assistant-type-protocolo_definido .clinical-subcard-label {
       color: #e5fff0;
     }
 
-    .assistant-type-investigacao .clinical-section-title {
+    .assistant-type-investigacao .clinical-section-title,
+    .assistant-type-investigacao .clinical-subcard-label {
       color: #eef6ff;
     }
 
-    .assistant-type-coleta_dados .clinical-section-title {
+    .assistant-type-coleta_dados .clinical-section-title,
+    .assistant-type-coleta_dados .clinical-subcard-label {
       color: #fff4d2;
     }
 
     .assistant-type-reavaliacao .clinical-section-title,
-    .system-error .clinical-section-title {
+    .assistant-type-reavaliacao .clinical-subcard-label,
+    .system-error .clinical-section-title,
+    .system-error .clinical-subcard-label {
       color: #ffe7e5;
     }
 
-    .assistant-type-default .clinical-section-title {
+    .assistant-type-default .clinical-section-title,
+    .assistant-type-default .clinical-subcard-label {
       color: #ffe4c8;
     }
 
@@ -501,6 +538,10 @@
 
       .clinical-section {
         padding: 13px 14px;
+      }
+
+      .clinical-subcards {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -689,11 +730,103 @@
       return "•";
     }
 
+    function getSubcardIcon(label) {
+      if (label === "Medicação") return "💉";
+      if (label === "Dose") return "⏱️";
+      if (label === "Duração") return "📅";
+      return "•";
+    }
+
     function shouldHighlightSection(title) {
       return title === "Diagnóstico provável" ||
              title === "Medicação" ||
              title === "Dose" ||
              title === "Duração";
+    }
+
+    function parseCondutaSubfields(content) {
+      const lines = content.split("\n");
+      const fields = [];
+      let intro = [];
+      let currentField = null;
+
+      const fieldMap = {
+        "medicação": "Medicação",
+        "dose": "Dose",
+        "duração": "Duração"
+      };
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+
+        if (!line) {
+          if (currentField) {
+            currentField.content.push("");
+          } else if (intro.length > 0) {
+            intro.push("");
+          }
+          continue;
+        }
+
+        const match = line.match(/^([^:]+):\s*(.*)$/);
+
+        if (match) {
+          const key = normalizeLine(match[1]).toLowerCase();
+          const mapped = fieldMap[key];
+
+          if (mapped) {
+            currentField = {
+              label: mapped,
+              content: []
+            };
+
+            if (match[2]) {
+              currentField.content.push(match[2].trim());
+            }
+
+            fields.push(currentField);
+            continue;
+          }
+        }
+
+        if (currentField) {
+          currentField.content.push(line);
+        } else {
+          intro.push(line);
+        }
+      }
+
+      return {
+        intro: intro.join("\n").trim(),
+        fields: fields.map((field) => ({
+          label: field.label,
+          value: field.content.join("\n").trim()
+        }))
+      };
+    }
+
+    function createSubcardsElement(fields) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "clinical-subcards";
+
+      fields.forEach((field) => {
+        const card = document.createElement("div");
+        card.className = "clinical-subcard";
+
+        const label = document.createElement("div");
+        label.className = "clinical-subcard-label";
+        label.textContent = `${getSubcardIcon(field.label)} ${field.label}`;
+
+        const value = document.createElement("div");
+        value.className = "clinical-subcard-value";
+        value.textContent = field.value;
+
+        card.appendChild(label);
+        card.appendChild(value);
+        wrapper.appendChild(card);
+      });
+
+      return wrapper;
     }
 
     function createClinicalSectionElement(title, content) {
@@ -715,6 +848,29 @@
 
       const bodyEl = document.createElement("div");
       bodyEl.className = "clinical-section-body";
+
+      if (title === "Conduta recomendada") {
+        const parsedConduta = parseCondutaSubfields(content);
+
+        if (parsedConduta.intro) {
+          const introEl = document.createElement("div");
+          introEl.className = "plain-text";
+          introEl.textContent = parsedConduta.intro;
+          bodyEl.appendChild(introEl);
+        }
+
+        if (parsedConduta.fields.length > 0) {
+          bodyEl.appendChild(createSubcardsElement(parsedConduta.fields));
+        }
+
+        if (!parsedConduta.intro && parsedConduta.fields.length === 0) {
+          bodyEl.textContent = content;
+        }
+
+        sectionEl.appendChild(titleEl);
+        sectionEl.appendChild(bodyEl);
+        return sectionEl;
+      }
 
       const lines = content
         .split("\n")
