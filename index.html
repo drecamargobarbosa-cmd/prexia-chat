@@ -32,6 +32,7 @@
       --input-bg: #f2f2f5;
       --input-text: #2d2d2d;
       --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+      --section-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
     }
 
     body {
@@ -184,7 +185,7 @@
     }
 
     .bubble {
-      max-width: min(80%, 760px);
+      max-width: min(82%, 820px);
       padding: 18px 20px;
       border-radius: 20px;
       line-height: 1.5;
@@ -215,7 +216,7 @@
       font-weight: 700;
       letter-spacing: 0.2px;
       opacity: 0.92;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       text-transform: uppercase;
     }
 
@@ -264,49 +265,60 @@
     .bubble-content {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
 
     .plain-text {
       white-space: pre-wrap;
       word-break: break-word;
+      line-height: 1.55;
     }
 
     .clinical-sections {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
       margin-top: 2px;
     }
 
     .clinical-section {
-      background: rgba(255, 255, 255, 0.10);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 14px;
-      padding: 12px 14px;
-      backdrop-filter: blur(2px);
+      background: rgba(255, 255, 255, 0.11);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: var(--section-shadow);
     }
 
     .clinical-section-title {
-      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
       font-weight: 800;
       letter-spacing: 0.3px;
       text-transform: uppercase;
-      margin-bottom: 6px;
-      opacity: 0.95;
+      margin-bottom: 8px;
+      opacity: 0.98;
+    }
+
+    .clinical-section-title-icon {
+      font-size: 0.95rem;
+      line-height: 1;
+      flex-shrink: 0;
     }
 
     .clinical-section-body {
       white-space: pre-wrap;
       word-break: break-word;
-      line-height: 1.5;
+      line-height: 1.55;
+      font-size: 1rem;
     }
 
     .clinical-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       margin: 0;
       padding: 0;
     }
@@ -314,7 +326,7 @@
     .clinical-list li {
       position: relative;
       padding-left: 16px;
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     .clinical-list li::before {
@@ -324,6 +336,16 @@
       top: 0;
       opacity: 0.95;
       font-weight: 700;
+    }
+
+    .clinical-highlight {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 8px 10px;
+      line-height: 1.4;
+      margin-top: 2px;
     }
 
     .assistant-type-protocolo_definido .clinical-section-title {
@@ -464,7 +486,7 @@
       }
 
       .bubble {
-        max-width: 90%;
+        max-width: 94%;
         font-size: 0.96rem;
         padding: 16px 18px;
       }
@@ -475,6 +497,10 @@
 
       .send-btn {
         width: 100%;
+      }
+
+      .clinical-section {
+        padding: 13px 14px;
       }
     }
   </style>
@@ -651,13 +677,41 @@
       };
     }
 
+    function getSectionIcon(title) {
+      if (title === "Avaliação Clínica") return "🩺";
+      if (title === "Diagnóstico provável") return "📌";
+      if (title === "Conduta recomendada") return "💊";
+      if (title === "Medicação") return "💉";
+      if (title === "Dose") return "⏱️";
+      if (title === "Duração") return "📅";
+      if (title === "Justificativa") return "📘";
+      if (title === "Observações clínicas") return "📍";
+      return "•";
+    }
+
+    function shouldHighlightSection(title) {
+      return title === "Diagnóstico provável" ||
+             title === "Medicação" ||
+             title === "Dose" ||
+             title === "Duração";
+    }
+
     function createClinicalSectionElement(title, content) {
       const sectionEl = document.createElement("div");
       sectionEl.className = "clinical-section";
 
       const titleEl = document.createElement("div");
       titleEl.className = "clinical-section-title";
-      titleEl.textContent = title;
+
+      const iconEl = document.createElement("span");
+      iconEl.className = "clinical-section-title-icon";
+      iconEl.textContent = getSectionIcon(title);
+
+      const textEl = document.createElement("span");
+      textEl.textContent = title;
+
+      titleEl.appendChild(iconEl);
+      titleEl.appendChild(textEl);
 
       const bodyEl = document.createElement("div");
       bodyEl.className = "clinical-section-body";
@@ -682,6 +736,11 @@
         });
 
         bodyEl.appendChild(list);
+      } else if (shouldHighlightSection(title)) {
+        const highlight = document.createElement("div");
+        highlight.className = "clinical-highlight";
+        highlight.textContent = content;
+        bodyEl.appendChild(highlight);
       } else {
         bodyEl.textContent = content;
       }
