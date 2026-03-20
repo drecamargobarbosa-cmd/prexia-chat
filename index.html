@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PREXIA | Assistente Clínico versão Github ok</title>
+  <title>PREXIA | Assistente Clínico</title>
   <style>
     * {
       box-sizing: border-box;
@@ -101,7 +101,7 @@
 
     .message.error {
       align-self: flex-start;
-      background: #6b1f1f;
+      background: #7a1f1f;
       border: 1px solid rgba(255, 255, 255, 0.12);
       color: #fff5f5;
     }
@@ -241,7 +241,7 @@
   </main>
 
   <script>
-    const API_URL = "https://SEU_DOMINIO_DA_API/chat";
+    const API_URL = "https://prexia-api.prexia.com.br/chat";
 
     const chatArea = document.getElementById("chatArea");
     const messageInput = document.getElementById("messageInput");
@@ -283,7 +283,9 @@
 
     function removeTyping() {
       const typing = document.getElementById("typingMessage");
-      if (typing) typing.remove();
+      if (typing) {
+        typing.remove();
+      }
     }
 
     function scrollToBottom() {
@@ -302,18 +304,17 @@
       messageInput.value = "";
       messageInput.focus();
       sendButton.disabled = true;
-
       addTyping();
 
       try {
         const payload = {
-  user_id: getUserId(),
-  mensagem: mensagemUsuario,
-  contexto: {
-    scenario: "clinico",
-    collected_data: ""
-  }
-};
+          user_id: getUserId(),
+          mensagem: mensagemUsuario,
+          contexto: {
+            scenario: "clinico",
+            collected_data: ""
+          }
+        };
 
         console.log("Payload enviado:", payload);
 
@@ -333,10 +334,9 @@
         removeTyping();
 
         if (!response.ok) {
-          const detalheErro =
-            data.detail
-              ? JSON.stringify(data.detail)
-              : `Erro HTTP ${response.status}`;
+          const detalheErro = data.detail
+            ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail))
+            : `Erro HTTP ${response.status}`;
 
           addMessage(`Erro ao consultar a API: ${detalheErro}`, "error");
           return;
@@ -348,6 +348,7 @@
           data.response ||
           data.message ||
           data.resultado ||
+          data.text ||
           (typeof data === "string" ? data : JSON.stringify(data, null, 2));
 
         addMessage(textoResposta || "Sem resposta disponível.", "bot");
