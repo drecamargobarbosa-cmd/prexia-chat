@@ -646,6 +646,16 @@
         .replace(/[\u0300-\u036f]/g, "");
     }
 
+    function normalizeFreeText(str) {
+      return (str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\w\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
     function isClinicalStructuredText(text) {
       const normalizedText = normalizeKey(text);
       return [
@@ -935,6 +945,48 @@
       }
     }
 
+    function containsQuestionInText(baseText, question) {
+      const normalizedBase = normalizeFreeText(baseText);
+      const normalizedQuestion = normalizeFreeText(question);
+
+      if (!normalizedBase || !normalizedQuestion) return false;
+      return normalizedBase.includes(normalizedQuestion);
+    }
+
+    function mergeResponseAndQuestions(responseText, questions) {
+      const base = (responseText || "").trim();
+
+      if (!Array.isArray(questions) || questions.length === 0) {
+        return base;
+      }
+
+      const uniqueQuestions = [];
+      const seen = new Set();
+
+      questions.forEach((question) => {
+        const cleanQuestion = typeof question === "string" ? question.trim() : "";
+        const normalizedQuestion = normalizeFreeText(cleanQuestion);
+
+        if (!cleanQuestion || !normalizedQuestion || seen.has(normalizedQuestion)) {
+          return;
+        }
+
+        seen.add(normalizedQuestion);
+
+        if (!containsQuestionInText(base, cleanQuestion)) {
+          uniqueQuestions.push(cleanQuestion);
+        }
+      });
+
+      if (uniqueQuestions.length === 0) {
+        return base;
+      }
+
+      const questionsBlock = uniqueQuestions.map((question) => `• ${question}`).join("\n");
+
+      return base ? `${base}\n\n${questionsBlock}` : questionsBlock;
+    }
+
     function addMessage(text, role = "assistant", extraClass = "", label = "") {
       const row = document.createElement("div");
       row.className = `message-row ${role}`;
@@ -1021,15 +1073,7 @@
         resposta = clinical.resposta.trim();
       }
 
-      if (Array.isArray(clinical.perguntas) && clinical.perguntas.length > 0) {
-        const perguntas = clinical.perguntas
-          .map((p) => `• ${p}`)
-          .join("\n");
-
-        resposta = resposta
-          ? `${resposta}\n\n${perguntas}`
-          : perguntas;
-      }
+      resposta = mergeResponseAndQuestions(resposta, clinical.perguntas);
 
       return {
         text: resposta || "Não foi possível interpretar a resposta da API.",
