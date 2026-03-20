@@ -384,15 +384,17 @@
 
       try {
         const response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            user_id: userId,
-            message: message
-          })
-        });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    user_id: userId,
+    message: message
+  }),
+  mode: "cors",
+  credentials: "omit"
+});
 
         const rawText = await response.text();
 
