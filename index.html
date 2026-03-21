@@ -588,7 +588,7 @@
   </main>
 
   <script>
-    const API_BASE = "https://prexia-api.prexia.com.br";
+    const API_BASE = "http://159.203.114.115";
     const CHAT_URL = `${API_BASE}/chat`;
     const RESET_URL = `${API_BASE}/reset`;
     const STORAGE_KEY = "prexia_user_id";
@@ -1101,9 +1101,7 @@
           body: JSON.stringify({
             user_id: userId,
             message: message
-          }),
-          mode: "cors",
-          credentials: "omit"
+          })
         });
 
         const rawText = await response.text();
@@ -1159,9 +1157,7 @@
 
       try {
         await fetch(`${RESET_URL}/${currentUserId}`, {
-          method: "POST",
-          mode: "cors",
-          credentials: "omit"
+          method: "POST"
         });
       } catch (error) {
         console.warn("Não foi possível limpar o contexto antigo no backend.", error);
