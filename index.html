@@ -17,10 +17,12 @@
       --panel: #1b2f68;
       --panel-soft: #23397a;
       --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.14);
       --text: #ffffff;
       --text-soft: #dce6ff;
       --accent: #ff7a00;
       --accent-hover: #ff8d22;
+      --accent-strong: #ff5a00;
       --danger: #9b1c1c;
       --danger-soft: #b3261e;
       --warn: #7a5600;
@@ -33,14 +35,17 @@
       --input-text: #2d2d2d;
       --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
       --section-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
-      --sidebar-width: 270px;
-      --sidebar-collapsed-width: 84px;
-      --header-height: 78px;
+      --sidebar-width: 290px;
+      --sidebar-collapsed-width: 92px;
+      --header-height: 84px;
     }
 
     body {
       font-family: Arial, Helvetica, sans-serif;
-      background: linear-gradient(180deg, var(--bg), var(--bg-secondary));
+      background:
+        radial-gradient(circle at top left, rgba(25, 95, 177, 0.28), transparent 26%),
+        radial-gradient(circle at top right, rgba(255, 122, 0, 0.10), transparent 22%),
+        linear-gradient(180deg, #0c2a6b 0%, #081a4b 54%, #07153d 100%);
       color: var(--text);
       min-height: 100vh;
       overflow: hidden;
@@ -54,17 +59,18 @@
 
     .sidebar {
       width: var(--sidebar-width);
-      background: rgba(0, 0, 0, 0.14);
+      background: linear-gradient(180deg, rgba(4, 15, 44, 0.86), rgba(8, 26, 75, 0.92));
       border-right: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(8px);
-      padding: 16px 14px;
+      backdrop-filter: blur(10px);
+      padding: 18px 14px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
       transition: width 0.25s ease, transform 0.25s ease;
       position: relative;
       z-index: 20;
       flex-shrink: 0;
+      box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
     }
 
     .app-shell.sidebar-collapsed .sidebar {
@@ -73,10 +79,10 @@
 
     .sidebar-top {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
-      min-height: 48px;
+      min-height: 58px;
     }
 
     .sidebar-brand {
@@ -86,19 +92,13 @@
       min-width: 0;
     }
 
-    .sidebar-logo {
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, var(--accent), var(--accent-hover));
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      font-weight: 800;
-      box-shadow: var(--shadow);
+    .sidebar-logo-img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      display: block;
       flex-shrink: 0;
+      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.25));
     }
 
     .sidebar-brand-text {
@@ -107,19 +107,21 @@
     }
 
     .sidebar-brand-title {
-      font-size: 1.05rem;
+      font-size: 1.2rem;
       font-weight: 800;
-      color: var(--text);
-      letter-spacing: 0.4px;
+      color: #ffffff;
+      letter-spacing: 0.8px;
       white-space: nowrap;
+      line-height: 1.05;
     }
 
     .sidebar-brand-subtitle {
       font-size: 0.76rem;
       color: var(--text-soft);
-      opacity: 0.88;
-      margin-top: 2px;
-      white-space: nowrap;
+      opacity: 0.90;
+      margin-top: 4px;
+      line-height: 1.35;
+      max-width: 170px;
     }
 
     .app-shell.sidebar-collapsed .sidebar-brand-text,
@@ -144,6 +146,7 @@
       font-weight: 700;
       flex-shrink: 0;
       transition: background 0.15s ease, transform 0.15s ease;
+      margin-top: 2px;
     }
 
     .sidebar-toggle:hover {
@@ -169,24 +172,24 @@
 
     .sidebar-button {
       width: 100%;
-      min-height: 52px;
+      min-height: 54px;
       border: none;
       border-radius: 16px;
-      background: var(--accent);
+      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
       color: #fff;
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 0 16px;
       cursor: pointer;
-      font-size: 0.96rem;
+      font-size: 0.98rem;
       font-weight: 700;
-      box-shadow: var(--shadow);
-      transition: background 0.15s ease, transform 0.15s ease;
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.24);
+      transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
     }
 
     .sidebar-button:hover {
-      background: var(--accent-hover);
+      filter: brightness(1.06);
       transform: translateY(-1px);
     }
 
@@ -209,7 +212,7 @@
     }
 
     .sidebar-card {
-      background: rgba(255, 255, 255, 0.05);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 14px;
@@ -221,13 +224,13 @@
     }
 
     .sidebar-card-title {
-      font-size: 0.86rem;
+      font-size: 0.88rem;
       font-weight: 700;
       color: var(--text);
     }
 
     .sidebar-card-text {
-      font-size: 0.78rem;
+      font-size: 0.79rem;
       color: var(--text-soft);
       line-height: 1.45;
       opacity: 0.92;
@@ -272,30 +275,48 @@
       min-height: var(--header-height);
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding: 14px 24px 16px;
-      background: rgba(0, 0, 0, 0.08);
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.10), rgba(255, 255, 255, 0.02));
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
     }
 
     .header-left {
       min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      display: block;
+      flex-shrink: 0;
+      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.28));
+    }
+
+    .header-brand-wrap {
+      min-width: 0;
     }
 
     .brand {
-      color: var(--accent);
+      color: #ffffff;
       font-size: 2rem;
       font-weight: 800;
       letter-spacing: 1px;
       margin-bottom: 2px;
+      line-height: 1.05;
     }
 
     .subtitle {
-      color: var(--text);
-      font-size: 0.95rem;
-      opacity: 0.95;
+      color: var(--text-soft);
+      font-size: 0.96rem;
+      opacity: 0.96;
+      line-height: 1.35;
     }
 
     .header-toggle {
@@ -320,7 +341,7 @@
 
     main {
       width: 100%;
-      max-width: 1100px;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 24px 16px 18px;
       display: flex;
@@ -343,7 +364,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      background: rgba(255, 255, 255, 0.05);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 12px 16px;
@@ -369,13 +390,14 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255, 122, 0, 0.12);
-      border: 1px solid rgba(255, 122, 0, 0.25);
+      background: rgba(255, 122, 0, 0.14);
+      border: 1px solid rgba(255, 122, 0, 0.30);
       color: #ffd5af;
       padding: 8px 12px;
       border-radius: 999px;
       font-size: 0.82rem;
       font-weight: 700;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
     }
 
     .chat-wrap {
@@ -384,12 +406,13 @@
       flex-direction: column;
       gap: 14px;
       min-height: 0;
-      background: rgba(255, 255, 255, 0.03);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.025));
       border: 1px solid var(--border);
-      border-radius: 22px;
+      border-radius: 24px;
       padding: 16px;
       box-shadow: var(--shadow);
       overflow: hidden;
+      backdrop-filter: blur(10px);
     }
 
     .messages {
@@ -427,20 +450,21 @@
     }
 
     .assistant .bubble {
-      background: linear-gradient(180deg, var(--panel-soft), var(--panel));
+      background: linear-gradient(180deg, #27478f, #1b2f68);
       color: var(--text);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-strong);
       border-top-left-radius: 16px;
     }
 
     .user .bubble {
-      background: var(--accent);
+      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
       color: #fff;
       border: none;
       border-top-right-radius: 16px;
       min-width: 120px;
       text-align: left;
       white-space: pre-wrap;
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.22);
     }
 
     .bubble-title {
@@ -514,8 +538,8 @@
     }
 
     .clinical-section {
-      background: rgba(255, 255, 255, 0.11);
-      border: 1px solid rgba(255, 255, 255, 0.13);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.09));
+      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 16px;
       padding: 14px 16px;
       box-shadow: var(--section-shadow);
@@ -653,10 +677,10 @@
       width: 100%;
       min-height: 72px;
       max-height: 180px;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       outline: none;
       border-radius: 18px;
-      background: var(--input-bg);
+      background: linear-gradient(180deg, #f8f8fb, #eef0f5);
       color: var(--input-text);
       padding: 16px 18px;
       font-size: 1rem;
@@ -674,17 +698,17 @@
       height: 60px;
       border: none;
       border-radius: 18px;
-      background: var(--accent);
+      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
       color: #fff;
       font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
-      box-shadow: var(--shadow);
+      transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 12px 24px rgba(255, 90, 0, 0.22);
     }
 
     .send-btn:hover {
-      background: var(--accent-hover);
+      filter: brightness(1.06);
       transform: translateY(-1px);
     }
 
@@ -729,7 +753,7 @@
 
     .footer-note {
       color: var(--text-soft);
-      opacity: 0.78;
+      opacity: 0.80;
       font-size: 0.82rem;
       text-align: center;
       padding: 2px 6px 0;
@@ -743,6 +767,14 @@
     @media (max-width: 980px) {
       .bubble {
         max-width: 92%;
+      }
+
+      .brand {
+        font-size: 1.8rem;
+      }
+
+      .subtitle {
+        font-size: 0.90rem;
       }
     }
 
@@ -761,7 +793,7 @@
         top: 0;
         left: 0;
         height: 100vh;
-        width: min(82vw, 300px);
+        width: min(84vw, 320px);
         transform: translateX(-100%);
         border-right: 1px solid rgba(255, 255, 255, 0.08);
       }
@@ -771,7 +803,7 @@
       }
 
       .app-shell.sidebar-collapsed .sidebar {
-        width: min(82vw, 300px);
+        width: min(84vw, 320px);
       }
 
       .app-shell.sidebar-collapsed .sidebar-brand-text,
@@ -828,8 +860,17 @@
         justify-content: center;
       }
 
+      .header-logo {
+        width: 44px;
+        height: 44px;
+      }
+
       .brand {
-        font-size: 1.7rem;
+        font-size: 1.55rem;
+      }
+
+      .subtitle {
+        font-size: 0.86rem;
       }
 
       header {
@@ -879,10 +920,10 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
         <div class="sidebar-brand">
-          <div class="sidebar-logo">PX</div>
+          <img src="logo-prexia.png" alt="Logo PREXIA" class="sidebar-logo-img" />
           <div class="sidebar-brand-text">
             <div class="sidebar-brand-title">PREXIA</div>
-            <div class="sidebar-brand-subtitle">Navegação clínica</div>
+            <div class="sidebar-brand-subtitle">Assistente clínico inteligente</div>
           </div>
         </div>
         <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Retrair ou expandir menu">☰</button>
@@ -918,8 +959,11 @@
     <div class="main-panel">
       <header>
         <div class="header-left">
-          <div class="brand">PREXIA</div>
-          <div class="subtitle">Assistente Clínico Inteligente de Apoio à Prescrição</div>
+          <img src="logo-prexia.png" alt="Logo PREXIA" class="header-logo" />
+          <div class="header-brand-wrap">
+            <div class="brand">PREXIA</div>
+            <div class="subtitle">Assistente Clínico Inteligente de Apoio à Prescrição</div>
+          </div>
         </div>
         <button id="headerToggle" class="header-toggle" type="button" aria-label="Abrir menu">☰</button>
       </header>
