@@ -1,1613 +1,218 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PREXIA | Assistente Clínico</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    :root {
-      --bg: #081a4b;
-      --bg-secondary: #0c1f57;
-      --panel: #1b2f68;
-      --panel-soft: #23397a;
-      --border: rgba(255, 255, 255, 0.08);
-      --text: #ffffff;
-      --text-soft: #dce6ff;
-      --accent: #ff7a00;
-      --accent-hover: #ff8d22;
-      --danger: #9b1c1c;
-      --danger-soft: #b3261e;
-      --warn: #7a5600;
-      --warn-soft: #9b6e00;
-      --info: #174a8b;
-      --info-soft: #1f5fb1;
-      --success: #1a5d36;
-      --success-soft: #217346;
-      --input-bg: #f2f2f5;
-      --input-text: #2d2d2d;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-      --section-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
-      --sidebar-width: 270px;
-      --sidebar-collapsed-width: 84px;
-      --header-height: 78px;
-    }
-
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: linear-gradient(180deg, var(--bg), var(--bg-secondary));
-      color: var(--text);
-      min-height: 100vh;
-      overflow: hidden;
-    }
-
-    .app-shell {
-      display: flex;
-      min-height: 100vh;
-      width: 100%;
-    }
-
-    .sidebar {
-      width: var(--sidebar-width);
-      background: rgba(0, 0, 0, 0.14);
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(8px);
-      padding: 16px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      transition: width 0.25s ease, transform 0.25s ease;
-      position: relative;
-      z-index: 20;
-      flex-shrink: 0;
-    }
-
-    .app-shell.sidebar-collapsed .sidebar {
-      width: var(--sidebar-collapsed-width);
-    }
-
-    .sidebar-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      min-height: 48px;
-    }
-
-    .sidebar-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .sidebar-logo {
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, var(--accent), var(--accent-hover));
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      font-weight: 800;
-      box-shadow: var(--shadow);
-      flex-shrink: 0;
-    }
-
-    .sidebar-brand-text {
-      min-width: 0;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-
-    .sidebar-brand-title {
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: 0.4px;
-      white-space: nowrap;
-    }
-
-    .sidebar-brand-subtitle {
-      font-size: 0.76rem;
-      color: var(--text-soft);
-      opacity: 0.88;
-      margin-top: 2px;
-      white-space: nowrap;
-    }
-
-    .app-shell.sidebar-collapsed .sidebar-brand-text,
-    .app-shell.sidebar-collapsed .sidebar-section-title,
-    .app-shell.sidebar-collapsed .sidebar-button-text,
-    .app-shell.sidebar-collapsed .sidebar-footer-text {
-      opacity: 0;
-      pointer-events: none;
-      width: 0;
-      overflow: hidden;
-    }
-
-    .sidebar-toggle {
-      width: 42px;
-      height: 42px;
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.06);
-      color: #fff;
-      cursor: pointer;
-      font-size: 1.05rem;
-      font-weight: 700;
-      flex-shrink: 0;
-      transition: background 0.15s ease, transform 0.15s ease;
-    }
-
-    .sidebar-toggle:hover {
-      background: rgba(255, 255, 255, 0.12);
-      transform: translateY(-1px);
-    }
-
-    .sidebar-section {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .sidebar-section-title {
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--text-soft);
-      opacity: 0.88;
-      padding: 0 6px;
-      transition: opacity 0.2s ease;
-    }
-
-    .sidebar-button {
-      width: 100%;
-      min-height: 52px;
-      border: none;
-      border-radius: 16px;
-      background: var(--accent);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 16px;
-      cursor: pointer;
-      font-size: 0.96rem;
-      font-weight: 700;
-      box-shadow: var(--shadow);
-      transition: background 0.15s ease, transform 0.15s ease;
-    }
-
-    .sidebar-button:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .sidebar-button-icon {
-      font-size: 1.15rem;
-      line-height: 1;
-      flex-shrink: 0;
-      width: 22px;
-      text-align: center;
-    }
-
-    .sidebar-button-text {
-      white-space: nowrap;
-      transition: opacity 0.2s ease;
-    }
-
-    .app-shell.sidebar-collapsed .sidebar-button {
-      justify-content: center;
-      padding: 0;
-    }
-
-    .sidebar-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px;
-      box-shadow: var(--section-shadow);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    }
-
-    .sidebar-card-title {
-      font-size: 0.86rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .sidebar-card-text {
-      font-size: 0.78rem;
-      color: var(--text-soft);
-      line-height: 1.45;
-      opacity: 0.92;
-    }
-
-    .app-shell.sidebar-collapsed .sidebar-card {
-      padding: 12px 10px;
-      align-items: center;
-    }
-
-    .app-shell.sidebar-collapsed .sidebar-card-title,
-    .app-shell.sidebar-collapsed .sidebar-card-text {
-      display: none;
-    }
-
-    .app-shell.sidebar-collapsed .sidebar-card::before {
-      content: "•";
-      font-size: 1.2rem;
-      color: var(--accent);
-      line-height: 1;
-    }
-
-    .sidebar-footer {
-      margin-top: auto;
-      padding: 10px 6px 4px;
-      color: var(--text-soft);
-      font-size: 0.76rem;
-      opacity: 0.78;
-      line-height: 1.45;
-      transition: opacity 0.2s ease;
-    }
-
-    .main-panel {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    header {
-      min-height: var(--header-height);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 14px 24px 16px;
-      background: rgba(0, 0, 0, 0.08);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      backdrop-filter: blur(6px);
-    }
-
-    .header-left {
-      min-width: 0;
-    }
-
-    .brand {
-      color: var(--accent);
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-      margin-bottom: 2px;
-    }
-
-    .subtitle {
-      color: var(--text);
-      font-size: 0.95rem;
-      opacity: 0.95;
-    }
-
-    .header-toggle {
-      display: none;
-      width: 42px;
-      height: 42px;
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.06);
-      color: #fff;
-      cursor: pointer;
-      font-size: 1.05rem;
-      font-weight: 700;
-      transition: background 0.15s ease, transform 0.15s ease;
-      flex-shrink: 0;
-    }
-
-    .header-toggle:hover {
-      background: rgba(255, 255, 255, 0.12);
-      transform: translateY(-1px);
-    }
-
-    main {
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px 16px 18px;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .chat-shell {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-      min-height: 0;
-    }
-
-    .info-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px 16px;
-      box-shadow: var(--shadow);
-      flex-shrink: 0;
-    }
-
-    .info-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .info-subtitle {
-      font-size: 0.82rem;
-      color: var(--text-soft);
-      opacity: 0.9;
-      margin-top: 2px;
-    }
-
-    .status-badge {
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 122, 0, 0.12);
-      border: 1px solid rgba(255, 122, 0, 0.25);
-      color: #ffd5af;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 700;
-    }
-
-    .chat-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      min-height: 0;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .messages {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      overflow-y: auto;
-      padding: 4px;
-      scroll-behavior: smooth;
-      min-height: 420px;
-    }
-
-    .message-row {
-      display: flex;
-      width: 100%;
-    }
-
-    .message-row.assistant {
-      justify-content: flex-start;
-    }
-
-    .message-row.user {
-      justify-content: flex-end;
-    }
-
-    .bubble {
-      max-width: min(82%, 820px);
-      padding: 18px 20px;
-      border-radius: 20px;
-      line-height: 1.5;
-      font-size: 1rem;
-      box-shadow: var(--shadow);
-      word-break: break-word;
-    }
-
-    .assistant .bubble {
-      background: linear-gradient(180deg, var(--panel-soft), var(--panel));
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-top-left-radius: 16px;
-    }
-
-    .user .bubble {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-top-right-radius: 16px;
-      min-width: 120px;
-      text-align: left;
-      white-space: pre-wrap;
-    }
-
-    .bubble-title {
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      opacity: 0.92;
-      margin-bottom: 10px;
-      text-transform: uppercase;
-    }
-
-    .assistant-type-default .bubble-title {
-      color: #ffd4ac;
-    }
-
-    .assistant-type-investigacao {
-      background: linear-gradient(180deg, var(--info-soft), var(--info)) !important;
-    }
-
-    .assistant-type-investigacao .bubble-title {
-      color: #d9ebff;
-    }
-
-    .assistant-type-coleta_dados {
-      background: linear-gradient(180deg, var(--warn-soft), var(--warn)) !important;
-    }
-
-    .assistant-type-coleta_dados .bubble-title {
-      color: #fff0c7;
-    }
-
-    .assistant-type-reavaliacao {
-      background: linear-gradient(180deg, var(--danger-soft), var(--danger)) !important;
-    }
-
-    .assistant-type-reavaliacao .bubble-title {
-      color: #ffd8d6;
-    }
-
-    .assistant-type-protocolo_definido {
-      background: linear-gradient(180deg, var(--success-soft), var(--success)) !important;
-    }
-
-    .assistant-type-protocolo_definido .bubble-title {
-      color: #d6ffe4;
-    }
-
-    .system-error {
-      background: linear-gradient(180deg, var(--danger-soft), var(--danger)) !important;
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .bubble-content {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .plain-text {
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.55;
-    }
-
-    .clinical-sections {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 2px;
-    }
-
-    .clinical-section {
-      background: rgba(255, 255, 255, 0.11);
-      border: 1px solid rgba(255, 255, 255, 0.13);
-      border-radius: 16px;
-      padding: 14px 16px;
-      box-shadow: var(--section-shadow);
-    }
-
-    .clinical-section-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-      font-weight: 800;
-      letter-spacing: 0.3px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      opacity: 0.98;
-    }
-
-    .clinical-section-title-icon {
-      font-size: 0.95rem;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .clinical-section-body {
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.55;
-      font-size: 1rem;
-    }
-
-    .clinical-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin: 0;
-      padding: 0;
-    }
-
-    .clinical-list li {
-      position: relative;
-      padding-left: 16px;
-      line-height: 1.5;
-    }
-
-    .clinical-list li::before {
-      content: "•";
-      position: absolute;
-      left: 0;
-      top: 0;
-      opacity: 0.95;
-      font-weight: 700;
-    }
-
-    .clinical-highlight {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 10px;
-      padding: 8px 10px;
-      line-height: 1.4;
-      margin-top: 2px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .clinical-subcards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .clinical-subcard {
-      background: rgba(255, 255, 255, 0.10);
-      border: 1px solid rgba(255, 255, 255, 0.13);
-      border-radius: 12px;
-      padding: 12px;
-    }
-
-    .clinical-subcard-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.76rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.25px;
-      margin-bottom: 6px;
-      opacity: 0.96;
-    }
-
-    .clinical-subcard-value {
-      line-height: 1.45;
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
-
-    .assistant-type-protocolo_definido .clinical-section-title,
-    .assistant-type-protocolo_definido .clinical-subcard-label {
-      color: #e5fff0;
-    }
-
-    .assistant-type-investigacao .clinical-section-title,
-    .assistant-type-investigacao .clinical-subcard-label {
-      color: #eef6ff;
-    }
-
-    .assistant-type-coleta_dados .clinical-section-title,
-    .assistant-type-coleta_dados .clinical-subcard-label {
-      color: #fff4d2;
-    }
-
-    .assistant-type-reavaliacao .clinical-section-title,
-    .assistant-type-reavaliacao .clinical-subcard-label,
-    .system-error .clinical-section-title,
-    .system-error .clinical-subcard-label {
-      color: #ffe7e5;
-    }
-
-    .assistant-type-default .clinical-section-title,
-    .assistant-type-default .clinical-subcard-label {
-      color: #ffe4c8;
-    }
-
-    .composer {
-      display: grid;
-      grid-template-columns: 1fr 120px;
-      gap: 12px;
-      align-items: end;
-      flex-shrink: 0;
-    }
-
-    .input {
-      width: 100%;
-      min-height: 72px;
-      max-height: 180px;
-      border: none;
-      outline: none;
-      border-radius: 18px;
-      background: var(--input-bg);
-      color: var(--input-text);
-      padding: 16px 18px;
-      font-size: 1rem;
-      line-height: 1.45;
-      box-shadow: var(--shadow);
-      resize: vertical;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    .input::placeholder {
-      color: #7a7a86;
-    }
-
-    .send-btn {
-      height: 60px;
-      border: none;
-      border-radius: 18px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
-      box-shadow: var(--shadow);
-    }
-
-    .send-btn:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .send-btn:disabled {
-      cursor: not-allowed;
-      opacity: 0.65;
-      transform: none;
-    }
-
-    .typing {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.85);
-      animation: blink 1.2s infinite ease-in-out;
-    }
-
-    .dot:nth-child(2) {
-      animation-delay: 0.15s;
-    }
-
-    .dot:nth-child(3) {
-      animation-delay: 0.3s;
-    }
-
-    @keyframes blink {
-      0%, 80%, 100% {
-        opacity: 0.25;
-        transform: scale(0.9);
-      }
-      40% {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
-    .footer-note {
-      color: var(--text-soft);
-      opacity: 0.78;
-      font-size: 0.82rem;
-      text-align: center;
-      padding: 2px 6px 0;
-      flex-shrink: 0;
-    }
-
-    .mobile-overlay {
-      display: none;
-    }
-
-    @media (max-width: 980px) {
-      .bubble {
-        max-width: 92%;
-      }
-    }
-
-    @media (max-width: 760px) {
-      body {
-        overflow: auto;
-      }
-
-      .app-shell {
-        display: block;
-        min-height: 100vh;
-      }
-
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        width: min(82vw, 300px);
-        transform: translateX(-100%);
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
-      }
-
-      .app-shell.sidebar-open .sidebar {
-        transform: translateX(0);
-      }
-
-      .app-shell.sidebar-collapsed .sidebar {
-        width: min(82vw, 300px);
-      }
-
-      .app-shell.sidebar-collapsed .sidebar-brand-text,
-      .app-shell.sidebar-collapsed .sidebar-section-title,
-      .app-shell.sidebar-collapsed .sidebar-button-text,
-      .app-shell.sidebar-collapsed .sidebar-footer-text {
-        opacity: 1;
-        pointer-events: auto;
-        width: auto;
-      }
-
-      .app-shell.sidebar-collapsed .sidebar-button {
-        justify-content: flex-start;
-        padding: 0 16px;
-      }
-
-      .app-shell.sidebar-collapsed .sidebar-card {
-        padding: 14px;
-        align-items: stretch;
-      }
-
-      .app-shell.sidebar-collapsed .sidebar-card-title,
-      .app-shell.sidebar-collapsed .sidebar-card-text {
-        display: block;
-      }
-
-      .app-shell.sidebar-collapsed .sidebar-card::before {
-        content: none;
-      }
-
-      .mobile-overlay {
-        display: block;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.45);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease;
-        z-index: 15;
-      }
-
-      .app-shell.sidebar-open .mobile-overlay {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      .main-panel {
-        min-height: 100vh;
-      }
-
-      .header-toggle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .brand {
-        font-size: 1.7rem;
-      }
-
-      header {
-        padding: 14px 14px 16px;
-      }
-
-      main {
-        padding: 14px 10px 12px;
-        overflow: visible;
-      }
-
-      .info-bar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .bubble {
-        max-width: 94%;
-        font-size: 0.96rem;
-        padding: 16px 18px;
-      }
-
-      .composer {
-        grid-template-columns: 1fr;
-      }
-
-      .send-btn {
-        width: 100%;
-      }
-
-      .clinical-section {
-        padding: 13px 14px;
-      }
-
-      .clinical-subcards {
-        grid-template-columns: 1fr;
-      }
-
-      .messages {
-        min-height: 360px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PREXIA | Assistente Clínico</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #081a4b;
+  --bg-secondary: #0c1f57;
+  --panel: #1b2f68;
+  --panel-soft: #23397a;
+  --border: rgba(255,255,255,0.08);
+  --text: #fff;
+  --accent: #ff7a00;
+  --accent-hover: #ff8d22;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(180deg, var(--bg), var(--bg-secondary));
+  color: var(--text);
+}
+
+/* APP */
+.app-shell {
+  display: flex;
+  height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 270px;
+  background: rgba(0,0,0,0.15);
+  padding: 16px;
+}
+
+/* MAIN */
+.main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* 🔥 importante */
+}
+
+/* HEADER */
+header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* MAIN CONTENT */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* 🔥 ESSENCIAL */
+  padding: 16px;
+}
+
+/* CHAT */
+.chat-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* WRAP */
+.chat-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  padding: 12px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+}
+
+/* MESSAGES */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0; /* 🔥 CORREÇÃO PRINCIPAL */
+}
+
+/* BUBBLES */
+.message-row {
+  display: flex;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.bubble {
+  padding: 14px;
+  border-radius: 16px;
+  max-width: 80%;
+}
+
+.user .bubble {
+  background: var(--accent);
+}
+
+.assistant .bubble {
+  background: var(--panel);
+}
+
+/* INPUT */
+.composer {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+}
+
+.send-btn {
+  width: 120px;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+}
+</style>
 </head>
+
 <body>
-  <div class="app-shell" id="appShell">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-top">
-        <div class="sidebar-brand">
-          <div class="sidebar-logo">PX</div>
-          <div class="sidebar-brand-text">
-            <div class="sidebar-brand-title">PREXIA</div>
-            <div class="sidebar-brand-subtitle">Navegação clínica</div>
-          </div>
-        </div>
-        <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Retrair ou expandir menu">☰</button>
-      </div>
 
-      <div class="sidebar-section">
-        <div class="sidebar-section-title">Ações</div>
-        <button id="newChatButton" class="sidebar-button" type="button">
-          <span class="sidebar-button-icon">＋</span>
-          <span class="sidebar-button-text">Nova conversa</span>
-        </button>
-      </div>
+<div class="app-shell">
 
-      <div class="sidebar-section">
-        <div class="sidebar-section-title">Sessão</div>
-        <div class="sidebar-card">
-          <div class="sidebar-card-title">Chat clínico ativo</div>
-          <div class="sidebar-card-text">
-            Acesso rápido à criação de uma nova conversa, sem precisar voltar ao topo da página.
-          </div>
-        </div>
-      </div>
-
-      <div class="sidebar-footer">
-        <span class="sidebar-footer-text">
-          Estrutura visual preparada para expansão futura, como histórico, protocolos e atalhos.
-        </span>
-      </div>
-    </aside>
-
-    <div class="mobile-overlay" id="mobileOverlay"></div>
-
-    <div class="main-panel">
-      <header>
-        <div class="header-left">
-          <div class="brand">PREXIA</div>
-          <div class="subtitle">Assistente Clínico de Apoio à Decisão</div>
-        </div>
-        <button id="headerToggle" class="header-toggle" type="button" aria-label="Abrir menu">☰</button>
-      </header>
-
-      <main>
-        <div class="chat-shell">
-          <div class="info-bar">
-            <div>
-              <div class="info-title">Sessão clínica ativa</div>
-              <div class="info-subtitle">
-                Apoio à decisão com foco atual em antibióticos, preparado para evolução futura para outras classes medicamentosas.
-              </div>
-            </div>
-            <div class="status-badge">PREXIA online</div>
-          </div>
-
-          <div class="chat-wrap">
-            <div class="messages" id="messages"></div>
-
-            <div class="composer">
-              <textarea
-                id="messageInput"
-                class="input"
-                placeholder="Descreva a situação clínica. Ex.: Paciente com sinusite, 30 anos, sem alergia, sem gravidade."
-              ></textarea>
-              <button id="sendButton" class="send-btn">Enviar</button>
-            </div>
-
-            <div class="footer-note">
-              Ferramenta de apoio à decisão. Utilize julgamento clínico, protocolos institucionais e avaliação presencial quando necessário.
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+  <div class="sidebar">
+    <h2>PREXIA</h2>
   </div>
 
-  <script>
-    const API_BASE = "https://prexia-api.prexia.com.br";
-    const CHAT_URL = `${API_BASE}/chat`;
-    const RESET_URL = `${API_BASE}/reset`;
-    const STORAGE_KEY = "prexia_user_id";
+  <div class="main-panel">
 
-    const appShellEl = document.getElementById("appShell");
-    const sidebarEl = document.getElementById("sidebar");
-    const sidebarToggleEl = document.getElementById("sidebarToggle");
-    const headerToggleEl = document.getElementById("headerToggle");
-    const mobileOverlayEl = document.getElementById("mobileOverlay");
+    <header>
+      Assistente Clínico
+    </header>
 
-    const messagesEl = document.getElementById("messages");
-    const inputEl = document.getElementById("messageInput");
-    const sendButtonEl = document.getElementById("sendButton");
-    const newChatButtonEl = document.getElementById("newChatButton");
+    <main>
 
-    function getOrCreateUserId() {
-      const existing = localStorage.getItem(STORAGE_KEY);
-      if (existing) return existing;
-      const generated = "user_" + Math.random().toString(36).slice(2, 10);
-      localStorage.setItem(STORAGE_KEY, generated);
-      return generated;
-    }
+      <div class="chat-shell">
 
-    let userId = getOrCreateUserId();
+        <div class="chat-wrap">
 
-    function createNewUserId() {
-      const generated = "user_" + Math.random().toString(36).slice(2, 10);
-      localStorage.setItem(STORAGE_KEY, generated);
-      userId = generated;
-      return generated;
-    }
+          <div id="messages" class="messages"></div>
 
-    function isMobileLayout() {
-      return window.innerWidth <= 760;
-    }
+          <div class="composer">
+            <input id="input" class="input" placeholder="Digite..." />
+            <button onclick="sendMessage()" class="send-btn">Enviar</button>
+          </div>
 
-    function closeMobileSidebar() {
-      appShellEl.classList.remove("sidebar-open");
-    }
+        </div>
 
-    function openMobileSidebar() {
-      appShellEl.classList.add("sidebar-open");
-    }
+      </div>
 
-    function toggleSidebar() {
-      if (isMobileLayout()) {
-        appShellEl.classList.toggle("sidebar-open");
-        return;
-      }
-      appShellEl.classList.toggle("sidebar-collapsed");
-    }
+    </main>
 
-    function handleResponsiveSidebar() {
-      if (isMobileLayout()) {
-        appShellEl.classList.remove("sidebar-collapsed");
-      } else {
-        appShellEl.classList.remove("sidebar-open");
-      }
-    }
+  </div>
 
-    function clearMessages() {
-      messagesEl.innerHTML = "";
-    }
+</div>
 
-    function getAssistantTitle(type) {
-      if (type === "investigacao") return "Investigação clínica";
-      if (type === "coleta_dados") return "Coleta de dados";
-      if (type === "reavaliacao") return "Reavaliação clínica";
-      if (type === "protocolo_definido") return "Conduta sugerida";
-      return "Resposta clínica";
-    }
+<script>
+const messagesEl = document.getElementById("messages");
+const inputEl = document.getElementById("input");
 
-    function getAssistantBubbleClass(type) {
-      if (type === "investigacao") return "assistant-type-investigacao";
-      if (type === "coleta_dados") return "assistant-type-coleta_dados";
-      if (type === "reavaliacao") return "assistant-type-reavaliacao";
-      if (type === "protocolo_definido") return "assistant-type-protocolo_definido";
-      return "assistant-type-default";
-    }
+function addMessage(text, role){
+  const row = document.createElement("div");
+  row.className = "message-row " + role;
 
-    function normalizeLine(line) {
-      return line.replace(/\s+/g, " ").trim();
-    }
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
 
-    function normalizeKey(str) {
-      return normalizeLine(str)
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-    }
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
 
-    function normalizeFreeText(str) {
-      return (str || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-    }
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 
-    function isClinicalStructuredText(text) {
-      const normalizedText = normalizeKey(text);
-      return [
-        "avaliacao clinica:",
-        "diagnostico provavel:",
-        "conduta recomendada:",
-        "medicacao:",
-        "dose:",
-        "duracao:",
-        "justificativa:",
-        "observacoes clinicas:"
-      ].some((header) => normalizedText.includes(header));
-    }
+function sendMessage(){
+  const text = inputEl.value.trim();
+  if(!text) return;
 
-    function parseClinicalSections(text) {
-      const lines = text.split("\n");
-      const sections = [];
-      let introLines = [];
-      let currentSection = null;
+  addMessage(text,"user");
+  inputEl.value = "";
 
-      const titlesMap = {
-        "avaliacao clinica": "Avaliação Clínica",
-        "diagnostico provavel": "Diagnóstico provável",
-        "conduta recomendada": "Conduta recomendada",
-        "medicacao": "Medicação",
-        "dose": "Dose",
-        "duracao": "Duração",
-        "justificativa": "Justificativa",
-        "observacoes clinicas": "Observações clínicas"
-      };
+  setTimeout(()=>{
+    addMessage("Resposta do PREXIA...","assistant");
+  },500);
+}
+</script>
 
-      for (const rawLine of lines) {
-        const line = rawLine.trim();
-
-        if (!line) {
-          if (currentSection) {
-            currentSection.content.push("");
-          } else if (introLines.length > 0) {
-            introLines.push("");
-          }
-          continue;
-        }
-
-        const headerMatch = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/);
-
-        if (headerMatch) {
-          const key = normalizeKey(headerMatch[1]);
-          const mappedTitle = titlesMap[key];
-
-          if (mappedTitle) {
-            currentSection = {
-              title: mappedTitle,
-              content: []
-            };
-
-            if (headerMatch[2]) {
-              currentSection.content.push(headerMatch[2].trim());
-            }
-
-            sections.push(currentSection);
-            continue;
-          }
-        }
-
-        if (currentSection) {
-          currentSection.content.push(line);
-        } else {
-          introLines.push(line);
-        }
-      }
-
-      return {
-        intro: introLines.join("\n").trim(),
-        sections: sections.map((section) => ({
-          title: section.title,
-          content: section.content.join("\n").trim()
-        }))
-      };
-    }
-
-    function getSectionIcon(title) {
-      if (title === "Avaliação Clínica") return "🩺";
-      if (title === "Diagnóstico provável") return "📌";
-      if (title === "Conduta recomendada") return "💊";
-      if (title === "Medicação") return "💉";
-      if (title === "Dose") return "⏱️";
-      if (title === "Duração") return "📅";
-      if (title === "Justificativa") return "📘";
-      if (title === "Observações clínicas") return "📍";
-      return "•";
-    }
-
-    function getSubcardIcon(label) {
-      if (label === "Medicação") return "💉";
-      if (label === "Dose") return "⏱️";
-      if (label === "Duração") return "📅";
-      return "•";
-    }
-
-    function shouldHighlightSection(title) {
-      return title === "Diagnóstico provável" ||
-             title === "Medicação" ||
-             title === "Dose" ||
-             title === "Duração";
-    }
-
-    function parseCondutaSubfields(content) {
-      const regex = /(medica(?:ç|c)ao|dose|dura(?:ç|c)ao)\s*:\s*/gi;
-      const normalizedMatches = [...content.matchAll(regex)];
-
-      if (normalizedMatches.length === 0) {
-        return {
-          intro: content.trim(),
-          fields: []
-        };
-      }
-
-      const fields = [];
-      let intro = "";
-
-      if (normalizedMatches[0].index > 0) {
-        intro = content.slice(0, normalizedMatches[0].index).trim();
-      }
-
-      for (let i = 0; i < normalizedMatches.length; i++) {
-        const match = normalizedMatches[i];
-        const rawLabel = match[1];
-        const start = match.index + match[0].length;
-        const end =
-          i + 1 < normalizedMatches.length
-            ? normalizedMatches[i + 1].index
-            : content.length;
-
-        const value = content.slice(start, end).trim();
-        const labelKey = normalizeKey(rawLabel);
-
-        let label = rawLabel;
-        if (labelKey === "medicacao") label = "Medicação";
-        if (labelKey === "dose") label = "Dose";
-        if (labelKey === "duracao") label = "Duração";
-
-        if (value) {
-          fields.push({
-            label,
-            value
-          });
-        }
-      }
-
-      return {
-        intro,
-        fields
-      };
-    }
-
-    function createSubcardsElement(fields) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "clinical-subcards";
-
-      fields.forEach((field) => {
-        const card = document.createElement("div");
-        card.className = "clinical-subcard";
-
-        const label = document.createElement("div");
-        label.className = "clinical-subcard-label";
-        label.textContent = `${getSubcardIcon(field.label)} ${field.label}`;
-
-        const value = document.createElement("div");
-        value.className = "clinical-subcard-value";
-        value.textContent = field.value;
-
-        card.appendChild(label);
-        card.appendChild(value);
-        wrapper.appendChild(card);
-      });
-
-      return wrapper;
-    }
-
-    function createClinicalSectionElement(title, content) {
-      const sectionEl = document.createElement("div");
-      sectionEl.className = "clinical-section";
-
-      const titleEl = document.createElement("div");
-      titleEl.className = "clinical-section-title";
-
-      const iconEl = document.createElement("span");
-      iconEl.className = "clinical-section-title-icon";
-      iconEl.textContent = getSectionIcon(title);
-
-      const textEl = document.createElement("span");
-      textEl.textContent = title;
-
-      titleEl.appendChild(iconEl);
-      titleEl.appendChild(textEl);
-
-      const bodyEl = document.createElement("div");
-      bodyEl.className = "clinical-section-body";
-
-      if (title === "Conduta recomendada") {
-        const parsedConduta = parseCondutaSubfields(content);
-
-        if (parsedConduta.intro) {
-          const introEl = document.createElement("div");
-          introEl.className = "plain-text";
-          introEl.textContent = parsedConduta.intro;
-          bodyEl.appendChild(introEl);
-        }
-
-        if (parsedConduta.fields.length > 0) {
-          bodyEl.appendChild(createSubcardsElement(parsedConduta.fields));
-        }
-
-        if (!parsedConduta.intro && parsedConduta.fields.length === 0) {
-          bodyEl.textContent = content;
-        }
-
-        sectionEl.appendChild(titleEl);
-        sectionEl.appendChild(bodyEl);
-        return sectionEl;
-      }
-
-      const lines = content
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line);
-
-      const isList =
-        lines.length > 1 &&
-        lines.every((line) => line.startsWith("•") || line.startsWith("-"));
-
-      if (isList) {
-        const list = document.createElement("ul");
-        list.className = "clinical-list";
-
-        lines.forEach((line) => {
-          const item = document.createElement("li");
-          item.textContent = line.replace(/^[•-]\s*/, "");
-          list.appendChild(item);
-        });
-
-        bodyEl.appendChild(list);
-      } else if (shouldHighlightSection(title)) {
-        const highlight = document.createElement("div");
-        highlight.className = "clinical-highlight";
-        highlight.textContent = content;
-        bodyEl.appendChild(highlight);
-      } else {
-        bodyEl.textContent = content;
-      }
-
-      sectionEl.appendChild(titleEl);
-      sectionEl.appendChild(bodyEl);
-
-      return sectionEl;
-    }
-
-    function appendFormattedContent(container, text) {
-      if (!isClinicalStructuredText(text)) {
-        const plain = document.createElement("div");
-        plain.className = "plain-text";
-        plain.textContent = text;
-        container.appendChild(plain);
-        return;
-      }
-
-      const parsed = parseClinicalSections(text);
-
-      if (parsed.intro) {
-        const introEl = document.createElement("div");
-        introEl.className = "plain-text";
-        introEl.textContent = parsed.intro;
-        container.appendChild(introEl);
-      }
-
-      if (parsed.sections.length > 0) {
-        const sectionsWrapper = document.createElement("div");
-        sectionsWrapper.className = "clinical-sections";
-
-        parsed.sections.forEach((section) => {
-          sectionsWrapper.appendChild(
-            createClinicalSectionElement(section.title, section.content)
-          );
-        });
-
-        container.appendChild(sectionsWrapper);
-      }
-    }
-
-    function containsQuestionInText(baseText, question) {
-      const normalizedBase = normalizeFreeText(baseText);
-      const normalizedQuestion = normalizeFreeText(question);
-
-      if (!normalizedBase || !normalizedQuestion) return false;
-      return normalizedBase.includes(normalizedQuestion);
-    }
-
-    function mergeResponseAndQuestions(responseText, questions) {
-      const base = (responseText || "").trim();
-
-      if (!Array.isArray(questions) || questions.length === 0) {
-        return base;
-      }
-
-      const uniqueQuestions = [];
-      const seen = new Set();
-
-      questions.forEach((question) => {
-        const cleanQuestion = typeof question === "string" ? question.trim() : "";
-        const normalizedQuestion = normalizeFreeText(cleanQuestion);
-
-        if (!cleanQuestion || !normalizedQuestion || seen.has(normalizedQuestion)) {
-          return;
-        }
-
-        seen.add(normalizedQuestion);
-
-        if (!containsQuestionInText(base, cleanQuestion)) {
-          uniqueQuestions.push(cleanQuestion);
-        }
-      });
-
-      if (uniqueQuestions.length === 0) {
-        return base;
-      }
-
-      const questionsBlock = uniqueQuestions.map((question) => `• ${question}`).join("\n");
-
-      return base ? `${base}\n\n${questionsBlock}` : questionsBlock;
-    }
-
-    function addMessage(text, role = "assistant", extraClass = "", label = "") {
-      const row = document.createElement("div");
-      row.className = `message-row ${role}`;
-
-      const bubble = document.createElement("div");
-      bubble.className = `bubble ${extraClass}`.trim();
-
-      if (label) {
-        const title = document.createElement("div");
-        title.className = "bubble-title";
-        title.textContent = label;
-        bubble.appendChild(title);
-      }
-
-      const content = document.createElement("div");
-      content.className = "bubble-content";
-
-      if (role === "assistant") {
-        appendFormattedContent(content, text);
-      } else {
-        content.textContent = text;
-      }
-
-      bubble.appendChild(content);
-
-      row.appendChild(bubble);
-      messagesEl.appendChild(row);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-
-      return row;
-    }
-
-    function addTypingIndicator() {
-      const row = document.createElement("div");
-      row.className = "message-row assistant";
-      row.id = "typingRow";
-
-      const bubble = document.createElement("div");
-      bubble.className = "bubble assistant-type-default";
-
-      const title = document.createElement("div");
-      title.className = "bubble-title";
-      title.textContent = "PREXIA analisando";
-      bubble.appendChild(title);
-
-      const typing = document.createElement("div");
-      typing.className = "typing";
-      typing.innerHTML = `
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-      `;
-
-      bubble.appendChild(typing);
-      row.appendChild(bubble);
-      messagesEl.appendChild(row);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    function removeTypingIndicator() {
-      const typingRow = document.getElementById("typingRow");
-      if (typingRow) typingRow.remove();
-    }
-
-    function extractAssistantPayload(data) {
-      if (!data) {
-        return {
-          text: "Resposta vazia da API.",
-          type: "erro"
-        };
-      }
-
-      const clinical = data.clinical_response || {};
-      const type = clinical.tipo || "default";
-
-      let resposta = "";
-
-      if (typeof data.resposta === "string" && data.resposta.trim()) {
-        resposta = data.resposta.trim();
-      } else if (
-        typeof clinical.resposta === "string" &&
-        clinical.resposta.trim()
-      ) {
-        resposta = clinical.resposta.trim();
-      }
-
-      resposta = mergeResponseAndQuestions(resposta, clinical.perguntas);
-
-      return {
-        text: resposta || "Não foi possível interpretar a resposta da API.",
-        type
-      };
-    }
-
-    async function sendMessage() {
-      const message = inputEl.value.trim();
-      if (!message) return;
-
-      addMessage(message, "user");
-      inputEl.value = "";
-      inputEl.focus();
-
-      if (isMobileLayout()) {
-        closeMobileSidebar();
-      }
-
-      sendButtonEl.disabled = true;
-      addTypingIndicator();
-
-      try {
-        const response = await fetch(CHAT_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            user_id: userId,
-            message: message
-          })
-        });
-
-        const rawText = await response.text();
-
-        if (!response.ok) {
-          let detail = `Erro HTTP ${response.status}.`;
-          try {
-            const errorData = JSON.parse(rawText);
-            if (errorData.detail) {
-              detail += ` ${errorData.detail}`;
-            } else if (errorData.erro) {
-              detail += ` ${errorData.erro}`;
-            }
-          } catch (_) {
-            if (rawText) {
-              detail += ` ${rawText}`;
-            }
-          }
-          throw new Error(detail);
-        }
-
-        let data;
-        try {
-          data = JSON.parse(rawText);
-        } catch (error) {
-          throw new Error("A API respondeu em formato inválido.");
-        }
-
-        const assistantPayload = extractAssistantPayload(data);
-        removeTypingIndicator();
-        addMessage(
-          assistantPayload.text,
-          "assistant",
-          getAssistantBubbleClass(assistantPayload.type),
-          getAssistantTitle(assistantPayload.type)
-        );
-      } catch (error) {
-        removeTypingIndicator();
-        addMessage(
-          `Erro ao consultar a API.\n\n${error.message}`,
-          "assistant",
-          "system-error",
-          "Erro de integração"
-        );
-        console.error("Erro no frontend:", error);
-      } finally {
-        sendButtonEl.disabled = false;
-      }
-    }
-
-    async function startNewConversation() {
-      const currentUserId = userId;
-
-      try {
-        await fetch(`${RESET_URL}/${currentUserId}`, {
-          method: "POST"
-        });
-      } catch (error) {
-        console.warn("Não foi possível limpar o contexto antigo no backend.", error);
-      }
-
-      createNewUserId();
-      clearMessages();
-      addWelcomeMessage();
-      inputEl.focus();
-
-      if (isMobileLayout()) {
-        closeMobileSidebar();
-      }
-    }
-
-    function addWelcomeMessage() {
-      addMessage(
-        "Olá. Sou o PREXIA.\n\nPosso apoiar a tomada de decisão clínica com foco atual em protocolos de antibióticos, incluindo indicação, escolha do medicamento, dose, duração, avaliação inicial de risco e reavaliação clínica. O projeto está sendo estruturado para evoluir futuramente para outras classes medicamentosas.",
-        "assistant",
-        "assistant-type-default",
-        "Boas-vindas"
-      );
-    }
-
-    sendButtonEl.addEventListener("click", sendMessage);
-
-    inputEl.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
-      }
-    });
-
-    newChatButtonEl.addEventListener("click", startNewConversation);
-    sidebarToggleEl.addEventListener("click", toggleSidebar);
-    headerToggleEl.addEventListener("click", openMobileSidebar);
-    mobileOverlayEl.addEventListener("click", closeMobileSidebar);
-
-    window.addEventListener("resize", handleResponsiveSidebar);
-
-    handleResponsiveSidebar();
-    addWelcomeMessage();
-  </script>
 </body>
 </html>
