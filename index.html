@@ -36,6 +36,14 @@
       --sidebar-width: 270px;
       --sidebar-collapsed-width: 84px;
       --header-height: 78px;
+      --scrollbar-track: rgba(255, 255, 255, 0.04);
+      --scrollbar-thumb: rgba(255, 255, 255, 0.22);
+      --scrollbar-thumb-hover: rgba(255, 255, 255, 0.34);
+    }
+
+    html,
+    body {
+      height: 100%;
     }
 
     body {
@@ -266,7 +274,6 @@
       min-width: 0;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
       height: 100vh;
       min-height: 0;
     }
@@ -402,9 +409,33 @@
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
-      padding: 4px;
+      overflow-x: hidden;
+      padding: 4px 8px 4px 4px;
       scroll-behavior: smooth;
       min-height: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+
+    .messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .messages::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+      border-radius: 999px;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+
+    .messages::-webkit-scrollbar-thumb:hover {
+      background: var(--scrollbar-thumb-hover);
+      background-clip: padding-box;
     }
 
     .message-row {
@@ -874,6 +905,11 @@
 
       .messages {
         min-height: 0;
+        scrollbar-width: thin;
+      }
+
+      .messages::-webkit-scrollbar {
+        width: 6px;
       }
     }
   </style>
@@ -1032,6 +1068,11 @@
       if (type === "coleta_dados") return "Coleta de dados";
       if (type === "reavaliacao") return "Reavaliação clínica";
       if (type === "protocolo_definido") return "Conduta sugerida";
+      if (type === "tratamento") return "Tratamento";
+      if (type === "conduta") return "Resposta clínica";
+      if (type === "antibiotico") return "Antibiótico";
+      if (type === "medicamento") return "Medicação";
+      if (type === "dose") return "Dose";
       return "Resposta clínica";
     }
 
@@ -1040,6 +1081,7 @@
       if (type === "coleta_dados") return "assistant-type-coleta_dados";
       if (type === "reavaliacao") return "assistant-type-reavaliacao";
       if (type === "protocolo_definido") return "assistant-type-protocolo_definido";
+      if (type === "tratamento") return "assistant-type-protocolo_definido";
       return "assistant-type-default";
     }
 
@@ -1074,7 +1116,9 @@
         "dose:",
         "duracao:",
         "justificativa:",
-        "observacoes clinicas:"
+        "observacoes clinicas:",
+        "posologia:",
+        "prescricao:"
       ].some((header) => normalizedText.includes(header));
     }
 
@@ -1092,7 +1136,9 @@
         "dose": "Dose",
         "duracao": "Duração",
         "justificativa": "Justificativa",
-        "observacoes clinicas": "Observações clínicas"
+        "observacoes clinicas": "Observações clínicas",
+        "posologia": "Posologia",
+        "prescricao": "Prescrição"
       };
 
       for (const rawLine of lines) {
@@ -1153,6 +1199,8 @@
       if (title === "Duração") return "📅";
       if (title === "Justificativa") return "📘";
       if (title === "Observações clínicas") return "📍";
+      if (title === "Posologia") return "📝";
+      if (title === "Prescrição") return "📄";
       return "•";
     }
 
@@ -1160,6 +1208,7 @@
       if (label === "Medicação") return "💉";
       if (label === "Dose") return "⏱️";
       if (label === "Duração") return "📅";
+      if (label === "Posologia") return "📝";
       return "•";
     }
 
@@ -1167,11 +1216,12 @@
       return title === "Diagnóstico provável" ||
              title === "Medicação" ||
              title === "Dose" ||
-             title === "Duração";
+             title === "Duração" ||
+             title === "Posologia";
     }
 
     function parseCondutaSubfields(content) {
-      const regex = /(medica(?:ç|c)ao|dose|dura(?:ç|c)ao)\s*:\s*/gi;
+      const regex = /(medica(?:ç|c)ao|dose|dura(?:ç|c)ao|posologia)\s*:\s*/gi;
       const normalizedMatches = [...content.matchAll(regex)];
 
       if (normalizedMatches.length === 0) {
@@ -1204,6 +1254,7 @@
         if (labelKey === "medicacao") label = "Medicação";
         if (labelKey === "dose") label = "Dose";
         if (labelKey === "duracao") label = "Duração";
+        if (labelKey === "posologia") label = "Posologia";
 
         if (value) {
           fields.push({
