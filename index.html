@@ -1004,7 +1004,6 @@
     const STORAGE_KEY = "prexia_user_id";
 
     const appShellEl = document.getElementById("appShell");
-    const sidebarEl = document.getElementById("sidebar");
     const sidebarToggleEl = document.getElementById("sidebarToggle");
     const headerToggleEl = document.getElementById("headerToggle");
     const mobileOverlayEl = document.getElementById("mobileOverlay");
@@ -1138,7 +1137,13 @@
         "justificativa": "Justificativa",
         "observacoes clinicas": "Observações clínicas",
         "posologia": "Posologia",
-        "prescricao": "Prescrição"
+        "prescricao": "Prescrição",
+        "confianca clinica": "Confiança clínica",
+        "risco clinico": "Risco clínico",
+        "seguranca clinica": "Segurança clínica",
+        "explicacao clinica": "Explicação clínica",
+        "alertas clinicos": "Alertas clínicos",
+        "dados relevantes ausentes": "Dados relevantes ausentes"
       };
 
       for (const rawLine of lines) {
@@ -1201,6 +1206,12 @@
       if (title === "Observações clínicas") return "📍";
       if (title === "Posologia") return "📝";
       if (title === "Prescrição") return "📄";
+      if (title === "Confiança clínica") return "🎯";
+      if (title === "Risco clínico") return "⚠️";
+      if (title === "Segurança clínica") return "🛡️";
+      if (title === "Explicação clínica") return "🧠";
+      if (title === "Alertas clínicos") return "🚨";
+      if (title === "Dados relevantes ausentes") return "🔎";
       return "•";
     }
 
@@ -1209,6 +1220,9 @@
       if (label === "Dose") return "⏱️";
       if (label === "Duração") return "📅";
       if (label === "Posologia") return "📝";
+      if (label === "Confiança clínica") return "🎯";
+      if (label === "Risco clínico") return "⚠️";
+      if (label === "Segurança clínica") return "🛡️";
       return "•";
     }
 
@@ -1217,7 +1231,10 @@
              title === "Medicação" ||
              title === "Dose" ||
              title === "Duração" ||
-             title === "Posologia";
+             title === "Posologia" ||
+             title === "Confiança clínica" ||
+             title === "Risco clínico" ||
+             title === "Segurança clínica";
     }
 
     function parseCondutaSubfields(content) {
@@ -1446,6 +1463,49 @@
       return base ? `${base}\n\n${questionsBlock}` : questionsBlock;
     }
 
+    function buildSafetyAppendix(clinical) {
+      const extraSections = [];
+
+      if (clinical.confidence) {
+        extraSections.push(`Confiança clínica: ${clinical.confidence}`);
+      }
+
+      if (clinical.risk_level) {
+        extraSections.push(`Risco clínico: ${clinical.risk_level}`);
+      }
+
+      if (clinical.nivel_seguranca) {
+        let seguranca = clinical.nivel_seguranca;
+        if (typeof clinical.reavaliacao_necessaria === "boolean") {
+          seguranca += clinical.reavaliacao_necessaria
+            ? " | reavaliação necessária: sim"
+            : " | reavaliação necessária: não";
+        }
+        extraSections.push(`Segurança clínica: ${seguranca}`);
+      }
+
+      if (clinical.explanation) {
+        extraSections.push(`Explicação clínica: ${clinical.explanation}`);
+      }
+
+      if (Array.isArray(clinical.alertas_clinicos) && clinical.alertas_clinicos.length > 0) {
+        const alertas = clinical.alertas_clinicos.map((item) => `• ${item}`).join("\n");
+        extraSections.push(`Alertas clínicos:\n${alertas}`);
+      }
+
+      if (Array.isArray(clinical.dados_relevantes_ausentes) && clinical.dados_relevantes_ausentes.length > 0) {
+        const ausentes = clinical.dados_relevantes_ausentes.map((item) => `• ${item}`).join("\n");
+        extraSections.push(`Dados relevantes ausentes:\n${ausentes}`);
+      }
+
+      if (Array.isArray(clinical.missing_relevant_data) && clinical.missing_relevant_data.length > 0) {
+        const missing = clinical.missing_relevant_data.map((item) => `• ${item}`).join("\n");
+        extraSections.push(`Dados relevantes ausentes:\n${missing}`);
+      }
+
+      return extraSections.join("\n\n").trim();
+    }
+
     function addMessage(text, role = "assistant", extraClass = "", label = "") {
       const row = document.createElement("div");
       row.className = `message-row ${role}`;
@@ -1533,6 +1593,11 @@
       }
 
       resposta = mergeResponseAndQuestions(resposta, clinical.perguntas);
+
+      const safetyAppendix = buildSafetyAppendix(clinical);
+      if (safetyAppendix) {
+        resposta = resposta ? `${resposta}\n\n${safetyAppendix}` : safetyAppendix;
+      }
 
       return {
         text: resposta || "Não foi possível interpretar a resposta da API.",
