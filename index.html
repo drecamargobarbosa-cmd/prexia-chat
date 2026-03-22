@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PREXIA | Assistente Clínico</title>
-
   <style>
     * {
       box-sizing: border-box;
@@ -22,6 +21,7 @@
       --text-soft: #dce6ff;
       --accent: #ff7a00;
       --accent-hover: #ff8d22;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
     }
 
     body {
@@ -38,16 +38,18 @@
     }
 
     .sidebar {
-      width: 260px;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 20px;
+      width: 270px;
+      background: rgba(0, 0, 0, 0.14);
+      padding: 16px;
     }
 
+    /* 🔥 CORREÇÃO 1 */
     .main-panel {
       flex: 1;
       display: flex;
       flex-direction: column;
-      height: 100vh; /* 🔥 CORREÇÃO */
+      height: 100vh;
+      min-height: 0;
     }
 
     header {
@@ -59,34 +61,37 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: 0; /* 🔥 CORREÇÃO */
-      padding: 20px;
+      min-height: 0;
+      overflow: hidden;
+      padding: 16px;
     }
 
+    /* 🔥 CORREÇÃO 2 */
     .chat-shell {
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: 0; /* 🔥 CORREÇÃO */
+      min-height: 0;
     }
 
     .chat-wrap {
       flex: 1;
       display: flex;
       flex-direction: column;
-      background: rgba(255,255,255,0.04);
-      border-radius: 16px;
       padding: 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 20px;
       overflow: hidden;
     }
 
+    /* 🔥 CORREÇÃO PRINCIPAL */
     .messages {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
       overflow-y: auto;
-      min-height: 0; /* 🔥 CORREÇÃO PRINCIPAL */
+      min-height: 0; /* 🔥 ESSENCIAL */
     }
 
     .message-row {
@@ -98,9 +103,9 @@
     }
 
     .bubble {
+      max-width: 75%;
       padding: 14px;
       border-radius: 16px;
-      max-width: 75%;
     }
 
     .user .bubble {
@@ -197,7 +202,6 @@ function send(){
   addMessage(text,"user");
   input.value = "";
 
-  // simulação (mantém funcionamento)
   setTimeout(()=>{
     addMessage("Resposta do PREXIA...","assistant");
   },500);
