@@ -1,149 +1,137 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PREXIA | Assistente Clínico</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PREXIA | Assistente Clínico</title>
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-:root {
-  --bg: #081a4b;
-  --bg-secondary: #0c1f57;
-  --panel: #1b2f68;
-  --panel-soft: #23397a;
-  --border: rgba(255,255,255,0.08);
-  --text: #fff;
-  --accent: #ff7a00;
-  --accent-hover: #ff8d22;
-}
+    :root {
+      --bg: #081a4b;
+      --bg-secondary: #0c1f57;
+      --panel: #1b2f68;
+      --panel-soft: #23397a;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #ffffff;
+      --text-soft: #dce6ff;
+      --accent: #ff7a00;
+      --accent-hover: #ff8d22;
+    }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
-}
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, var(--bg), var(--bg-secondary));
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  background: linear-gradient(180deg, var(--bg), var(--bg-secondary));
-  color: var(--text);
-}
+    .app-shell {
+      display: flex;
+      height: 100vh;
+    }
 
-/* APP */
-.app-shell {
-  display: flex;
-  height: 100vh;
-}
+    .sidebar {
+      width: 260px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 20px;
+    }
 
-/* SIDEBAR */
-.sidebar {
-  width: 270px;
-  background: rgba(0,0,0,0.15);
-  padding: 16px;
-}
+    .main-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh; /* 🔥 CORREÇÃO */
+    }
 
-/* MAIN */
-.main-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100vh; /* 🔥 importante */
-}
+    header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
 
-/* HEADER */
-header {
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
-}
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0; /* 🔥 CORREÇÃO */
+      padding: 20px;
+    }
 
-/* MAIN CONTENT */
-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* 🔥 ESSENCIAL */
-  padding: 16px;
-}
+    .chat-shell {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0; /* 🔥 CORREÇÃO */
+    }
 
-/* CHAT */
-.chat-shell {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
+    .chat-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 16px;
+      overflow: hidden;
+    }
 
-/* WRAP */
-.chat-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border-radius: 16px;
-  padding: 12px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.04);
-}
+    .messages {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      min-height: 0; /* 🔥 CORREÇÃO PRINCIPAL */
+    }
 
-/* MESSAGES */
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0; /* 🔥 CORREÇÃO PRINCIPAL */
-}
+    .message-row {
+      display: flex;
+    }
 
-/* BUBBLES */
-.message-row {
-  display: flex;
-}
+    .message-row.user {
+      justify-content: flex-end;
+    }
 
-.message-row.user {
-  justify-content: flex-end;
-}
+    .bubble {
+      padding: 14px;
+      border-radius: 16px;
+      max-width: 75%;
+    }
 
-.bubble {
-  padding: 14px;
-  border-radius: 16px;
-  max-width: 80%;
-}
+    .user .bubble {
+      background: var(--accent);
+    }
 
-.user .bubble {
-  background: var(--accent);
-}
+    .assistant .bubble {
+      background: var(--panel);
+    }
 
-.assistant .bubble {
-  background: var(--panel);
-}
+    .composer {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
 
-/* INPUT */
-.composer {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
+    textarea {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+    }
 
-.input {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-}
-
-.send-btn {
-  width: 120px;
-  background: var(--accent);
-  border: none;
-  border-radius: 10px;
-  color: #fff;
-}
-</style>
+    button {
+      width: 120px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+    }
+  </style>
 </head>
 
 <body>
@@ -152,6 +140,7 @@ main {
 
   <div class="sidebar">
     <h2>PREXIA</h2>
+    <button onclick="newChat()">Nova conversa</button>
   </div>
 
   <div class="main-panel">
@@ -169,8 +158,8 @@ main {
           <div id="messages" class="messages"></div>
 
           <div class="composer">
-            <input id="input" class="input" placeholder="Digite..." />
-            <button onclick="sendMessage()" class="send-btn">Enviar</button>
+            <textarea id="input"></textarea>
+            <button onclick="send()">Enviar</button>
           </div>
 
         </div>
@@ -184,8 +173,8 @@ main {
 </div>
 
 <script>
-const messagesEl = document.getElementById("messages");
-const inputEl = document.getElementById("input");
+const messages = document.getElementById("messages");
+const input = document.getElementById("input");
 
 function addMessage(text, role){
   const row = document.createElement("div");
@@ -196,21 +185,33 @@ function addMessage(text, role){
   bubble.textContent = text;
 
   row.appendChild(bubble);
-  messagesEl.appendChild(row);
+  messages.appendChild(row);
 
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  messages.scrollTop = messages.scrollHeight;
 }
 
-function sendMessage(){
-  const text = inputEl.value.trim();
+function send(){
+  const text = input.value.trim();
   if(!text) return;
 
   addMessage(text,"user");
-  inputEl.value = "";
+  input.value = "";
 
+  // simulação (mantém funcionamento)
   setTimeout(()=>{
     addMessage("Resposta do PREXIA...","assistant");
   },500);
+}
+
+input.addEventListener("keydown", function(e){
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    send();
+  }
+});
+
+function newChat(){
+  messages.innerHTML = "";
 }
 </script>
 
